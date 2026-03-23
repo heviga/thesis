@@ -32,16 +32,13 @@ The objective of the practical part is to identify suitable models of the proces
 
 System identification experiments were conducted to obtain input--output data suitable for the development of both classical and data-driven models of the heat exchanger. The experiments were performed on the Armfield PCT23 setup described in the previous section.
 
-Before the identification measurements, the heat exchanger was operated until steady conditions were achieved.
- The temperature of the hot circuit was regulated by the built-in electric heater, whose power was controlled by a simple proportional controller. The controller gain was selected such that the inlet temperature of the hot circuit was maintained close to steady-state value. Throughout all identification experiments, the heater control settings were kept unchanged to ensure consistent thermal conditions. This auxiliary control loop was not modified and is therefore not considered part of the identification process.
+Before the identification measurements, the heat exchanger was operated until steady conditions were achieved. The temperature of the hot circuit was regulated by the built-in electric heater, whose power was controlled by a simple proportional controller. The controller gain was selected such that the inlet temperature of the hot circuit was maintained close to a steady-state value. Throughout all identification experiments, the heater control settings were kept unchanged to ensure consistent thermal conditions. This auxiliary control loop was not modified and is therefore not considered part of the identification process.
 
 During the identification experiments, the pump supplying the hot circuit (Pump~F) was used as the manipulated input. The pump speed was changed in steps every $250~\mathrm{s}$ to capture the dynamic response of the system.
-
 
 The pump of the cold circuit (Pump~W) was operated at a constant speed of $50~\%$ throughout the experiments. This ensured a steady flow rate of the cold medium and allowed the influence of the hot-side flow rate on the outlet temperature to be isolated.
 
 The measured output used for identification was the temperature at the outlet of the heat exchanger, denoted as $T_4$. The pump speed and the corresponding outlet temperature were recorded continuously. Figure~\ref{fig:raw_measurements} shows the applied input signal (Pump~F speed) and the resulting outlet temperature response used for system identification.
-
 
 \begin{figure}[htbp]
     \centering
@@ -51,15 +48,13 @@ The measured output used for identification was the temperature at the outlet of
 \end{figure}
 
 For comparison of responses obtained at different operating points, the measured signals were centered using their empirical mean values,
-
 \begin{equation}
-\bar{y} = \mathrm{mean}(y) = 59.07~^\circ\mathrm{C}, \qquad
-\bar{u} = \mathrm{mean}(u) = 65.84~\%.
+\bar{y} = \mathrm{mean}(y) = 59.07\,^{\circ}\mathrm{C}, \qquad
+\bar{u} = \mathrm{mean}(u) = 65.84\,\%.
 \end{equation}
 These values were also used for the step response analysis.
 
 Step responses were extracted from the measured data by detecting changes in the input signal. The corresponding temperature responses were aligned in time and scaled according to the input step size. The normalized step responses are shown in Figure~\ref{fig:normalized_steps}. Minor differences between individual responses are present, but the dominant dynamics are consistent.
-
 
 \begin{figure}[htbp]
     \centering
@@ -68,17 +63,10 @@ Step responses were extracted from the measured data by detecting changes in the
     \label{fig:normalized_steps}
 \end{figure}
 
-
-
 \subsection{Step-Response-Based Identification of the Heat Exchanger}
 \label{sec:strejc_ident}
 
-An average normalized step response was obtained by averaging all valid
-normalized responses from the identification dataset. This averaged
-response provides a representative description of the dominant process
-dynamics and is used for the identification of a simple linear model.
-The resulting average step response is shown in
-Figure~\ref{fig:avg_step}.
+An average normalized step response was obtained by averaging all valid normalized responses from the identification dataset. This averaged response provides a representative description of the dominant process dynamics and is used for the identification of a simple linear model. The resulting average step response is shown in Figure~\ref{fig:avg_step}.
 
 \begin{figure}[htbp]
     \centering
@@ -87,73 +75,49 @@ Figure~\ref{fig:avg_step}.
     \label{fig:avg_step}
 \end{figure}
 
-Based on the averaged step response, a first-order linear model was
-identified. The steady-state gain $K$ was estimated from the final value
-of the response, while the time constant $\tau$ was determined using the
-$63.2\%$ criterion.
+Based on the averaged step response, a first-order linear model was identified. The steady-state gain $K$ was estimated from the final value of the response, while the time constant $\tau$ was determined using the $63.2\%$ criterion.
 
 For the identified process, the estimated parameters were
 \[
 K \approx 1.17, \qquad \tau \approx 68~\text{samples}.
 \]
 
-With a sampling period of $T_s = 1~\mathrm{s}$, the continuous-time model
-was converted into a discrete-time state-space representation. For a
-first-order system, the discrete-time coefficients are given by
+With a sampling period of $T_s = 1~\mathrm{s}$, the continuous-time model was converted into a discrete-time state-space representation. For a first-order system, the discrete-time coefficients are given by
 \begin{equation}
 A = e^{-T_s/\tau}, \qquad
 B = K \left(1 - e^{-T_s/\tau}\right), \qquad
 C = 1, \qquad
-D = 0 .
+D = 0.
 \end{equation}
 
-Substituting the identified parameters into the discrete-time model
-introduced in equation~\eqref{eq:strejc_state} yields the following
-representation:
+Substituting the identified parameters into the discrete-time model introduced in equation~\eqref{eq:strejc_state} yields the following representation:
 \begin{equation}
-x_{k+1} = 0.985\, x_k + 0.016\, u_k,
+x_{k+1} = 0.985\,x_k + 0.016\,u_k,
 \qquad
-y_k = x_k .
+y_k = x_k.
 \end{equation}
 
-The identified linear model is subsequently used as the prediction model
-in the baseline MPC design.
+The identified linear model is subsequently used as the prediction model in the baseline MPC design.
 
-To evaluate the predictive capability of the model, an open-loop
-simulation was performed using the testing dataset. In this setting, the
-measured input signal was applied directly to the model, while the output
-was not corrected using measurements. The resulting trajectory therefore
-represents a pure model prediction driven only by the input signal and
-the initial condition.
+To evaluate the predictive capability of the model, an open-loop simulation was performed using the testing dataset. In this setting, the measured input signal was applied directly to the model, while the output was not corrected using measurements. The resulting trajectory therefore represents a pure model prediction driven only by the input signal and the initial condition.
 
-The model parameters were identified using the complete dataset. For
-validation, the data were split, and the second part of the experiment,
-starting at $t = 2000~\mathrm{s}$, was used for open-loop testing.
+The model parameters were identified using the complete dataset. For validation, the data were split, and the second part of the experiment, starting at $t = 2000~\mathrm{s}$, was used for open-loop testing.
 
-The predicted output $\hat{y}_k$ was compared with the measured outlet
-temperature $y_k = T_4$, and the prediction error was quantified using
-the root mean square error (RMSE),
+The predicted output $\hat{y}_k$ was compared with the measured outlet temperature $y_k = T_4$, and the prediction error was quantified using the root mean square error (RMSE),
 \begin{equation}
-\mathrm{RMSE} = \sqrt{\frac{1}{N} \sum_{k=1}^{N} \left( y_k - \hat{y}_k \right)^2},
+\mathrm{RMSE} =
+\sqrt{\frac{1}{N} \sum_{k=1}^{N} \left( y_k - \hat{y}_k \right)^2},
 \end{equation}
-where $N$ denotes the number of samples in the testing dataset. The RMSE
-was computed in physical units after reversing the data scaling.
+where $N$ denotes the number of samples in the testing dataset. The RMSE was computed in physical units after reversing the data scaling.
 
-For the identified linear model, the overall open-loop RMSE obtained on
-the test data was
+For the identified linear model, the overall open-loop RMSE obtained on the test data was
 \[
-\mathrm{RMSE}_{\mathrm{OL}} = 2.124~^\circ\mathrm{C}.
+\mathrm{RMSE}_{\mathrm{OL}} = 2.124\,^{\circ}\mathrm{C}.
 \]
 
-This value provides a direct measure of model accuracy, as it reflects
-how well the model predicts the process output without feedback. The
-results indicate that the model captures the dominant thermal dynamics
-of the heat exchanger, while prediction errors gradually accumulate due
-to nonlinear effects and unmodeled disturbances.
+This value provides a direct measure of model accuracy, as it reflects how well the model predicts the process output without feedback. The results indicate that the model captures the dominant thermal dynamics of the heat exchanger, while prediction errors gradually accumulate due to nonlinear effects and unmodeled disturbances.
 
-Although the model is sufficient for basic control design, these
-limitations motivate the use of more expressive data-driven models, such
-as the Koopman-based approach introduced in the following sections.
+Although the model is sufficient for basic control design, these limitations motivate the use of more expressive data-driven models, such as the Koopman-based approach introduced in the following sections.
 
 \subsection{Koopman-based Identification of a Heat Exchanger}
 \label{sec:koopman_identification}
@@ -167,23 +131,28 @@ We used an encoder--decoder architecture with control inputs. The measured outle
 Training was performed on segments of length $n_{\mathrm{steps}}=50$ using mini-batches of size $b_s=100$. We used the Adam optimizer with learning rate $10^{-3}$ and a fixed random seed. The maximum number of epochs was set to $900$, with early stopping monitored on the development loss (patience $200$) and a warmup period of $100$ epochs. Training took approximately $35$ minutes on a single GPU.
 
 Training minimized a weighted sum of loss terms that penalize prediction errors and keep the latent representation consistent. The objective was to achieve optimal multi-step predictions, one-step behavior, and encoder--decoder mapping. The corresponding mean squared errors were approximately
-
 \[
 \mathrm{MSE}_{\text{train}} \approx 0.068, \qquad
-\mathrm{MSE}_{\text{val}} \approx 0.060 .
+\mathrm{MSE}_{\text{val}} \approx 0.060.
 \]
-
 
 The identified Koopman model was then evaluated in open loop on the available test trajectory. The resulting open-loop error was
 \[
-\mathrm{RMSE}_{\mathrm{OL}}^{\mathrm{Koop}} = 2.315~^\circ\mathrm{C}.
+\mathrm{RMSE}_{\mathrm{OL}}^{\mathrm{Koop}} = 2.315\,^{\circ}\mathrm{C}.
 \]
-This value is slightly higher than the open-loop RMSE of the first-order Strejc model. The difference is mainly related to the open-loop evaluation setting. In
-the Koopman case, the system state is represented in a higher-dimensional lifted space
-and must be initialized from the measured output, which can influence the open-loop
-prediction.
 
-The identified matrices $A_{\mathcal K}$, $B_{\mathcal K}$ and $C_{\mathcal K}$ are used in the following sections for Koopman-based MPC design and experimental evaluation on the PCT23 system.
+This value is slightly higher than the open-loop RMSE of the first-order linear model. The difference is mainly related to the open-loop evaluation setting. In the Koopman case, the system state is represented in a higher-dimensional lifted space and must be initialized from the measured output, which can influence the open-loop prediction.
+
+The identified matrices $A_{\mathcal K}$, $B_{\mathcal K}$, and $C_{\mathcal K}$ are used in the following sections for Koopman-based MPC design and experimental evaluation on the PCT23 system.
+
+For a direct visual comparison, Figure~\ref{fig:open_loop_compare} shows the measured test output together with the open-loop predictions of both identified models. The linear model follows the dominant trend of the measured response well, while the Koopman model provides a comparable prediction quality. The figure confirms that both models are suitable for subsequent controller design, although both accumulate prediction error over longer horizons.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{images/open_loop_comparison.png}
+    \caption{Open-loop comparison of the measured outlet temperature $T_4$ and the predicted outputs of the linear step-response model and the Koopman model on the test dataset.}
+    \label{fig:open_loop_compare}
+\end{figure}
 
 
 
@@ -239,12 +208,8 @@ and the outlet temperature was constrained to
 \[
 0~^\circ\mathrm{C} \leq y_k \leq 70~^\circ\mathrm{C}.
 \]
-The resulting quadratic program was solved online using the
 
-\texttt{quadprog} solver via the YALMIP \cite{lofberg2004yalmip} optimization framework. The first
-control action of the optimal sequence was applied to the plant, and the
-procedure was repeated at each sampling instant.
-
+The resulting quadratic program was solved online using the \texttt{quadprog} solver via the YALMIP~\cite{lofberg2004yalmip} optimization framework.
 \subsection{Strejc-based MPC}
 
 
