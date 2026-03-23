@@ -210,13 +210,14 @@ and the outlet temperature was constrained to
 \]
 
 The resulting quadratic program was solved online using the \texttt{quadprog} solver via the YALMIP~\cite{lofberg2004yalmip} optimization framework.
+
 \subsection{Strejc-based MPC}
 
 
 The Strejc-based MPC uses the same controller structure as the
 Koopman-based MPC. In particular, the cost function weights
 $(Q = 10,\, R = 1)$, the actuator and output constraints, and the
-KF parameters $(Q_{\mathrm{KF}}, R_{\mathrm{KF}})$ as wee as the prediction horizon $N$ were chosen
+KF parameters $(Q_{\mathrm{KF}}, R_{\mathrm{KF}})$ as well as the prediction horizon $N$ were chosen
 identically. 
 
 By keeping the MPC formulation and tuning parameters consistent across
