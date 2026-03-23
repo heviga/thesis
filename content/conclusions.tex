@@ -1,2 +1,538 @@
-\chapter{Conclusions}
-thesis conclusions
+\chapter{Practical Part}
+\section{Introduction}
+\label{sec:practical_introduction}
+
+This chapter focuses on the practical implementation of modeling and control strategies for a plate heat exchanger using the Armfield Process Plant Trainer PCT23 \cite{armfield_pct23_manual}. It presents the procedures for system identification, controller design, and the evaluation of control performance through simulations and real-time experiments.
+
+The Armfield PCT23 is a laboratory-scale plate heat exchanger consisting of two hydraulically separated circuits: a hot fluid circuit and a cold fluid circuit. Heat transfer between the two media takes place in the plate heat exchanger, while the overall process dynamics are influenced by the flow rates and inlet temperatures of both circuits. Owing to the characteristics of heat transfer, the system exhibits slow dynamics and nonlinear behavior typical of thermal processes.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.6\textwidth]{images/PU.png}
+    \caption{Armfield Process Plant Trainer PCT23. (1) Plate heat exchanger, 
+    (2) cold water reservoir, 
+    (3) hot water reservoir with electric heating, 
+    (4) Pump~W for the cold water circuit, 
+    (5) Pump~F for the hot water circuit.}
+    \label{fig:pct23_plant}
+\end{figure}
+
+The hot medium is heated by an electric heater, whose power is regulated by a dedicated controller to maintain the inlet temperature of the hot circuit at an approximately constant level. In this work, the heater control is treated as an auxiliary control loop and is not included in the main control design.
+
+A photograph of the experimental setup is shown in Figure~\ref{fig:pct23_plant}. The plate heat exchanger is indicated by label~(1). The hot water circuit is driven by the heating pump, shown as component~(5), which supplies heated water to the heat exchanger. The remaining components include the hot and cold water reservoirs and the corresponding circulation pumps.
+
+The controlled variable is the outlet temperature from the heat exchanger, denoted as $T_4$. The manipulated variable is the pump power of the hot circuit (Pump~F), which directly affects the flow rate and, consequently, the heat transfer rate. The control input is constrained by the physical limits of the pump within the range of $20$--$100~\%$.
+
+The objective of the practical part is to identify suitable models of the process based on experimental data, design MPC controllers using both a classical first-order Strejc model and a data-driven Koopman model, and compare their performance under identical constraints in simulation and real-time operation on the PCT23 system.
+
+
+
+
+\section{System Identification}
+
+System identification experiments were conducted to obtain input--output data suitable for the development of both classical and data-driven models of the heat exchanger. The experiments were performed on the Armfield PCT23 setup described in the previous section.
+
+Before the identification measurements, the heat exchanger was operated until steady conditions were achieved.
+ The temperature of the hot circuit was regulated by the built-in electric heater, whose power was controlled by a simple proportional controller. The controller gain was selected such that the inlet temperature of the hot circuit was maintained close to steady-state value. Throughout all identification experiments, the heater control settings were kept unchanged to ensure consistent thermal conditions. This auxiliary control loop was not modified and is therefore not considered part of the identification process.
+
+During the identification experiments, the pump supplying the hot circuit (Pump~F) was used as the manipulated input. The pump speed was changed in steps every $250~\mathrm{s}$ to capture the dynamic response of the system.
+
+
+The pump of the cold circuit (Pump~W) was operated at a constant speed of $50~\%$ throughout the experiments. This ensured a steady flow rate of the cold medium and allowed the influence of the hot-side flow rate on the outlet temperature to be isolated.
+
+The measured output used for identification was the temperature at the outlet of the heat exchanger, denoted as $T_4$. The pump speed and the corresponding outlet temperature were recorded continuously. Figure~\ref{fig:raw_measurements} shows the applied input signal (Pump~F speed) and the resulting outlet temperature response used for system identification.
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{images/fig_raw_measurementsSplit.png}
+    \caption{Measured input signal (Pump~F speed) and measured outlet temperature $T_4$ used for system identification.}
+    \label{fig:raw_measurements}
+\end{figure}
+
+For comparison of responses obtained at different operating points, the measured signals were centered using their empirical mean values,
+
+\begin{equation}
+\bar{y} = \mathrm{mean}(y) = 59.07~^\circ\mathrm{C}, \qquad
+\bar{u} = \mathrm{mean}(u) = 65.84~\%.
+\end{equation}
+These values were also used for the step response analysis.
+
+Step responses were extracted from the measured data by detecting changes in the input signal. The corresponding temperature responses were aligned in time and scaled according to the input step size. The normalized step responses are shown in Figure~\ref{fig:normalized_steps}. Minor differences between individual responses are present, but the dominant dynamics are consistent.
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{images/fig_normalized_step_responses.png}
+    \caption{Normalized step responses of the outlet temperature $T_4$ to step changes in Pump~F speed.}
+    \label{fig:normalized_steps}
+\end{figure}
+
+
+
+\subsection{Step-Response-Based Identification of the Heat Exchanger}
+\label{sec:strejc_ident}
+
+An average normalized step response was obtained by averaging all valid
+normalized responses from the identification dataset. This averaged
+response provides a representative description of the dominant process
+dynamics and is used for the identification of a simple linear model.
+The resulting average step response is shown in
+Figure~\ref{fig:avg_step}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{images/fig_average_step_response.png}
+    \caption{Average normalized step response used for linear model identification.}
+    \label{fig:avg_step}
+\end{figure}
+
+Based on the averaged step response, a first-order linear model was
+identified. The steady-state gain $K$ was estimated from the final value
+of the response, while the time constant $\tau$ was determined using the
+$63.2\%$ criterion.
+
+For the identified process, the estimated parameters were
+\[
+K \approx 1.17, \qquad \tau \approx 68~\text{samples}.
+\]
+
+With a sampling period of $T_s = 1~\mathrm{s}$, the continuous-time model
+was converted into a discrete-time state-space representation. For a
+first-order system, the discrete-time coefficients are given by
+\begin{equation}
+A = e^{-T_s/\tau}, \qquad
+B = K \left(1 - e^{-T_s/\tau}\right), \qquad
+C = 1, \qquad
+D = 0 .
+\end{equation}
+
+Substituting the identified parameters into the discrete-time model
+introduced in equation~\eqref{eq:strejc_state} yields the following
+representation:
+\begin{equation}
+x_{k+1} = 0.985\, x_k + 0.016\, u_k,
+\qquad
+y_k = x_k .
+\end{equation}
+
+The identified linear model is subsequently used as the prediction model
+in the baseline MPC design.
+
+To evaluate the predictive capability of the model, an open-loop
+simulation was performed using the testing dataset. In this setting, the
+measured input signal was applied directly to the model, while the output
+was not corrected using measurements. The resulting trajectory therefore
+represents a pure model prediction driven only by the input signal and
+the initial condition.
+
+The model parameters were identified using the complete dataset. For
+validation, the data were split, and the second part of the experiment,
+starting at $t = 2000~\mathrm{s}$, was used for open-loop testing.
+
+The predicted output $\hat{y}_k$ was compared with the measured outlet
+temperature $y_k = T_4$, and the prediction error was quantified using
+the root mean square error (RMSE),
+\begin{equation}
+\mathrm{RMSE} = \sqrt{\frac{1}{N} \sum_{k=1}^{N} \left( y_k - \hat{y}_k \right)^2},
+\end{equation}
+where $N$ denotes the number of samples in the testing dataset. The RMSE
+was computed in physical units after reversing the data scaling.
+
+For the identified linear model, the overall open-loop RMSE obtained on
+the test data was
+\[
+\mathrm{RMSE}_{\mathrm{OL}} = 2.124~^\circ\mathrm{C}.
+\]
+
+This value provides a direct measure of model accuracy, as it reflects
+how well the model predicts the process output without feedback. The
+results indicate that the model captures the dominant thermal dynamics
+of the heat exchanger, while prediction errors gradually accumulate due
+to nonlinear effects and unmodeled disturbances.
+
+Although the model is sufficient for basic control design, these
+limitations motivate the use of more expressive data-driven models, such
+as the Koopman-based approach introduced in the following sections.
+
+\subsection{Koopman-based Identification of a Heat Exchanger}
+\label{sec:koopman_identification}
+
+This subsection summarizes how the Koopman prediction model used later for control was obtained. While Section~\ref{sec:Koopman_operator} presents the general Koopman framework, here we focus on the specific model structure, training setup, and how the final state-space matrices were extracted.
+
+The identification was implemented in the \texttt{Neuromancer} framework~\cite{neuromancer2022}. Before training, the measured output and input signals were standardized using precomputed \texttt{StandardScaler} objects (mean and standard deviation), mainly to improve numerical conditioning.
+
+We used an encoder--decoder architecture with control inputs. The measured outlet temperature $y_k$ was lifted to a latent state $z_k \in \mathbb{R}^{n_z}$ with $n_z=10$ using a fully connected multi-layer perceptron with three hidden layers $[60,\,60,\,60]$ and ReLU activations. The input $u_k$ was mapped to the same latent dimension by a linear layer without bias. The latent dynamics were represented by a linear operator, and the output was reconstructed by a linear decoder without bias. The Koopman matrices used later in MPC correspond directly to the learned network weights. The total number of trainable parameters was $8170$.
+
+Training was performed on segments of length $n_{\mathrm{steps}}=50$ using mini-batches of size $b_s=100$. We used the Adam optimizer with learning rate $10^{-3}$ and a fixed random seed. The maximum number of epochs was set to $900$, with early stopping monitored on the development loss (patience $200$) and a warmup period of $100$ epochs. Training took approximately $35$ minutes on a single GPU.
+
+Training minimized a weighted sum of loss terms that penalize prediction errors and keep the latent representation consistent. The objective was to achieve optimal multi-step predictions, one-step behavior, and encoder--decoder mapping. The corresponding mean squared errors were approximately
+
+\[
+\mathrm{MSE}_{\text{train}} \approx 0.068, \qquad
+\mathrm{MSE}_{\text{val}} \approx 0.060 .
+\]
+
+
+The identified Koopman model was then evaluated in open loop on the available test trajectory. The resulting open-loop error was
+\[
+\mathrm{RMSE}_{\mathrm{OL}}^{\mathrm{Koop}} = 2.315~^\circ\mathrm{C}.
+\]
+This value is slightly higher than the open-loop RMSE of the first-order Strejc model. The difference is mainly related to the open-loop evaluation setting. In
+the Koopman case, the system state is represented in a higher-dimensional lifted space
+and must be initialized from the measured output, which can influence the open-loop
+prediction.
+
+The identified matrices $A_{\mathcal K}$, $B_{\mathcal K}$ and $C_{\mathcal K}$ are used in the following sections for Koopman-based MPC design and experimental evaluation on the PCT23 system.
+
+
+
+\section{MPC Controller Design}
+\label{sec:mpc_design}
+
+Based on the identified process models described in the previous sections, MPC was designed for both the classical
+Strejc model and the data-driven Koopman model. In both cases, the control
+objective is to regulate the outlet temperature of the heat exchanger
+around a fixed operating point. The reference was set to zero in the
+normalized coordinates, corresponding to the empirical mean temperature
+used during model identification.
+
+
+\subsection{Koopman-based MPC}
+
+For the Koopman-based controller, the prediction model is given by the
+Koopman system matrices identified in
+equations~\eqref{eq:koopman_state}, \eqref{eq:koopman_output}.
+The lifted state vector has dimension $n_z = 10$, corresponding to the
+learned latent representation of the measured temperature and input.
+
+
+Since only the outlet temperature $T_4$ is measured, a KF is used
+to estimate the lifted Koopman state.
+The filter was implemented
+using constant covariance matrices
+\[
+Q_{\mathrm{KF}} = 0.5\,I, \qquad R_{\mathrm{KF}} = 0.1,
+\]
+which were selected empirically to balance responsiveness.
+
+
+To evaluate closed-loop performance over the entire experiment of length $N_{\mathrm{CL}}$ samples, the cumulative cost was computed as
+\begin{equation}
+    J_{\mathrm{CL}} =
+    \sum_{t=0}^{N_{\mathrm{CL}}-1}
+    \left(
+        \|y_t\|_{Q}^{2} + \|u_t\|_{R}^{2}
+    \right),
+    \label{eq:closed_loop_cost}
+\end{equation}
+with weights $Q = 10$ and $R = 1$.
+
+
+
+Input and output constraints were enforced directly in the optimization
+problem. The pump speed was limited to the interval
+\[
+20~\% \leq u_k \leq 100~\%,
+\]
+and the outlet temperature was constrained to
+\[
+0~^\circ\mathrm{C} \leq y_k \leq 70~^\circ\mathrm{C}.
+\]
+The resulting quadratic program was solved online using the
+
+\texttt{quadprog} solver via the YALMIP \cite{lofberg2004yalmip} optimization framework. The first
+control action of the optimal sequence was applied to the plant, and the
+procedure was repeated at each sampling instant.
+
+\subsection{Strejc-based MPC}
+
+
+The Strejc-based MPC uses the same controller structure as the
+Koopman-based MPC. In particular, the cost function weights
+$(Q = 10,\, R = 1)$, the actuator and output constraints, and the
+KF parameters $(Q_{\mathrm{KF}}, R_{\mathrm{KF}})$ as wee as the prediction horizon $N$ were chosen
+identically. 
+
+By keeping the MPC formulation and tuning parameters consistent across
+both controllers, any observed differences in control performance can be
+attributed primarily to the quality of the underlying prediction model
+rather than to differences in controller design.
+\section{Simulation Results}
+\label{sec:simulation_results}
+
+Closed-loop simulations were used to compare the Koopman-based MPC and the Strejc-based MPC under the same constraints and tuning described in Section~\ref{sec:mpc_design}. The simulations were run for $300$~s with the baseline nonlinear model used as the plant. The controllers were tested from several initial outlet temperatures $T_0 \in \{45,50,55,58,60,62,66,68\}\,^{\circ}\mathrm{C}$.
+
+The plant used in the closed-loop simulations is a data-driven nonlinear model identified using a Koopman-based lifting approach. The model was trained in Python using the NeuroMANCER framework and subsequently used as the baseline nonlinear plant in MATLAB closed-loop simulations.
+
+The core idea of the model is to approximate the nonlinear input–output dynamics by lifting the measured output into a higher-dimensional latent space, where the evolution is described by a linear dynamical system. The model structure consists of four main components:
+
+\begin{itemize}
+\item an encoder neural network mapping the measured outlet temperature $y$ to a latent state $x \in \mathbb{R}^{240}$,
+\item a linear Koopman operator $K$ describing the latent state evolution,
+\item a linear input lifting matrix $B$ mapping the control input to the latent space,
+\item a decoder neural network reconstructing the physical output from the latent state.
+\end{itemize}
+
+The latent dynamics are described by the discrete-time model
+\begin{equation}
+x_{k+1} = K x_k + B u_k,
+\end{equation}
+where $x_k$ is the lifted state and $u_k$ is the control input.
+The physical output is reconstructed as
+\begin{equation}
+y_k = f_{\mathrm{dec}}(x_k),
+\end{equation}
+where $f_{\mathrm{dec}}(\cdot)$ denotes the decoder neural network.
+
+The encoder and decoder are implemented as multi-layer perceptrons (MLPs) with ReLU and ELU nonlinearities, respectively, while the Koopman operator $K$ and the input matrix $B$ are linear layers without bias. The latent dimension was chosen as $n_x = 240$.
+
+
+As an example, Figure~\ref{fig:cl_response} shows the closed-loop response for the initial temperature $T_0 = 62\,^{\circ}\mathrm{C}$. Both controllers regulate the outlet temperature to the operating point around $59\,^{\circ}\mathrm{C}$ with negligible steady-state error, which is slightly lower for the Koopman MPC. During the transient phase, the Koopman MPC remains closer to the reference, resulting in a lower RMSE of $0.866\,^{\circ}\mathrm{C}$ compared to $1.010\,^{\circ}\mathrm{C}$ for the Strejc MPC (Table~\ref{tab:performance_metrics}). This difference is mainly caused by a more aggressive initial reduction of the control input, leading to faster convergence.
+
+
+% \begin{figure}[!t]
+% \centering
+% % replace filename with the new one (e.g. cl_compare_T0_62.png)
+% \includegraphics[width=0.95\textwidth]{images/cl_compare_T0_62.png}
+% \caption{Closed-loop response and control input comparison for Koopman MPC and Strejc MPC (start $T_0 = 62\,^{\circ}\mathrm{C}$).}
+% \label{fig:cl_response}
+% \end{figure}
+
+\begin{figure}[!t]
+    \centering
+    % replace filename with the new one (e.g. cl_compare_T0_62.png)
+    \includegraphics[width=0.95\textwidth]{images/Figure_04_62.png}
+    \caption{Closed-loop response and control input comparison for Koopman MPC and Strejc MPC (start $T_0 = 62\,^{\circ}\mathrm{C}$).}
+    \label{fig:cl_response}
+\end{figure}
+
+
+\begin{figure}[!t]
+    \centering
+    % replace filename with the new one (e.g. cl_compare_T0_62.png)
+    \includegraphics[width=0.95\textwidth]{images/Figure_07_55.png}
+    \caption{Closed-loop response and control input comparison for Koopman MPC and Strejc MPC (start $T_0 = 55\,^{\circ}\mathrm{C}$).}
+    \label{fig:cl_response2}
+\end{figure}
+
+For performance evaluation, three metrics were considered: the root mean square error (RMSE), the integral of absolute error (IAE), and the quadratic objective value, evaluated consistently with the normalized MPC formulation. The IAE is defined as
+\begin{equation}
+\mathrm{IAE} = \sum_{k=1}^{N} \left| y(k) - y_{\mathrm{ref}} \right|,
+\end{equation}
+where $y(k)$ denotes the outlet temperature at time step $k$, $y_{\mathrm{ref}}$ is the steady-state operating point, and $N$ is the length of the simulation horizon.
+ For $T_0 = 62\,^{\circ}\mathrm{C}$, the Koopman MPC reaches $\mathrm{IAE}=99.6$, while the Strejc MPC reaches $\mathrm{IAE}=123.7$. The corresponding objective values are $43.12$ (Koopman) and $48.48$ (Strejc).
+
+Table~\ref{tab:performance_metrics} summarizes the results for all tested initial temperatures. Close to the operating point (e.g. $T_0 = 58$--$62\,^{\circ}\mathrm{C}$), both controllers keep the tracking error small. When starting further away (e.g. $T_0 = 45\,^{\circ}\mathrm{C}$ or $T_0 = 68\,^{\circ}\mathrm{C}$), the errors increase for both, which is visible mainly in the larger IAE and RMSE values. Overall, the mean RMSE over all tested initial conditions is $2.042\,^{\circ}\mathrm{C}$ for the Koopman MPC and $2.133\,^{\circ}\mathrm{C}$ for the Strejc MPC, with mean IAE values $216.0$ and $231.5$, respectively.
+
+
+
+
+% \begin{table}[!t]
+%     \centering
+%     \caption{Performance metrics for Koopman MPC and Strejc MPC evaluated for different initial temperatures.}
+%     \label{tab:performance_metrics}
+%     \begin{tabular}{c|ccc|ccc}
+%     \hline
+%     \multirow{2}{*}{$T_0$ [$^\circ$C]} &
+%     \multicolumn{3}{c|}{Koopman MPC} &
+%     \multicolumn{3}{c}{Strejc MPC} \\
+%      & RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ &
+%      RMSE [$^\circ$C] & IAE &  $J_{\mathrm{CL}}$ \\
+%     \hline
+%     45 & 3.606 & 308.5 & 514.84 & 3.670 & 324.3 & 516.58 \\
+%     50 & 1.680 & 133.5 & 134.31 & 1.746 & 145.4 & 131.55 \\
+%     55 & 1.022 & 93.1  & 59.50  & 1.083 & 102.6 & 55.92  \\
+%     58 & 0.356 & 50.5  & 7.31   & 0.419 & 59.2  & 8.32   \\
+%     60 & 0.466 & 66.4  & 12.69  & 0.559 & 81.5  & 14.84  \\
+%     \rowcolor{gray!15}
+%     62 & 0.866 & 99.6  & 43.12  & 1.010 & 123.7 & 48.48  \\
+%     66 & 2.898 & 309.3 & 305.76 & 2.871 & 322.3 & 348.46 \\
+%     68 & 5.446 & 667.1 & 1008.51& 5.709 & 692.9 & 1205.30\\
+%     \hline
+%     \textbf{Mean} &
+%     \textbf{2.042} & \textbf{216.0} & \textbf{260.76} &
+%     \textbf{2.133} & \textbf{231.5} & \textbf{291.18} \\
+%     \textbf{Sum}  &
+%     \textbf{16.34} & \textbf{1727.9} & \textbf{2086.04} &
+%     \textbf{17.07} & \textbf{1852.0} & \textbf{2329.45} \\
+%     \hline
+%     \end{tabular}
+%     \end{table}
+    
+    \begin{table}[!t]
+        \centering
+        \caption{Performance metrics for Koopman MPC and Strejc MPC evaluated for different initial temperatures.}
+        \label{tab:performance_metrics}
+        \begin{tabular}{c|ccc|ccc}
+        \hline
+        \multirow{2}{*}{$T_0$ [$^\circ$C]} &
+        \multicolumn{3}{c|}{Koopman MPC} &
+        \multicolumn{3}{c}{Strejc MPC} \\
+         & RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ &
+         RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ \\
+        \hline
+        45 & 2.530 & 282.8 & 519.36 & 2.548 & 300.2 & 516.66 \\
+        50 & 1.151 & 99.6  & 139.36 & 1.180 & 116.7 & 135.51 \\
+        55 & 0.639 & 54.7  & 64.20  & 0.676 & 71.0  & 59.86  \\
+        58 & 0.128 & 12.9  & 20.72  & 0.123 & 21.7  & 10.43  \\
+        60 & 0.287 & 26.2  & 34.58  & 0.183 & 31.4  & 16.38  \\
+        \rowcolor{gray!15}
+        62 & 0.498 & 48.2  & 59.12  & 0.456 & 61.2  & 44.25  \\
+        66 & 1.766 & 223.0 & 284.43 & 1.780 & 262.5 & 336.85 \\
+        68 & 4.056 & 699.8 & 1208.60& 3.182 & 525.5 & 882.26 \\
+        \hline
+        \textbf{Mean} &
+        \textbf{1.382} & \textbf{180.3} & \textbf{291.80} &
+        \textbf{1.266} & \textbf{173.8} & \textbf{250.27} \\
+        \textbf{Sum} &
+        \textbf{11.06} & \textbf{1447.1} & \textbf{2334.39} &
+        \textbf{10.13} & \textbf{1390.2} & \textbf{2002.18} \\
+        \hline
+        \end{tabular}
+    \end{table}
+
+
+    The quadratic objective function exhibits a comparable trend to the error-based metrics. However, unlike the previous results, neither controller consistently outperforms the other across all initial conditions. For lower and moderate initial temperatures, the objective values are relatively close, with slight differences depending on the specific operating point.
+
+    For higher initial temperatures (e.g., $T_0 = 68,^{\circ}\mathrm{C}$), the Strejc MPC achieves a significantly lower objective value compared to the Koopman MPC. This indicates a more favorable trade-off between tracking performance and control effort in these scenarios. In particular, the reduced objective value for the Strejc controller suggests smoother control actions with lower penalized input activity, even when the tracking error remains comparable.
+    
+    When averaged over all tested initial conditions, the mean RMSE of the Koopman MPC is $1.38,^{\circ}\mathrm{C}$, while the Strejc MPC achieves a slightly lower value of $1.27,^{\circ}\mathrm{C}$. Similarly, the mean IAE is $180.3$ for the Koopman MPC and $173.8$ for the Strejc MPC. The mean closed-loop objective values are $291.80$ and $250.27$, respectively, again favoring the Strejc MPC in terms of overall cost.
+    
+    Overall, the results indicate that both controllers provide comparable closed-loop performance, with the Strejc MPC showing a slight advantage in the averaged performance metrics under the considered tuning and operating conditions.
+    
+    All three performance metrics are visualized in Figure~\ref{fig:sim_metrics_summary}.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=\textwidth]{images/Figure_01_metrics.png}
+        \caption{Closed-loop performance metrics versus initial temperature $T_0$ for Koopman MPC and Strejc MPC:
+        tracking RMSE, IAE, and the closed-loop objective value $J_{\mathrm{CL}}$.}
+        \label{fig:sim_metrics_summary}
+    \end{figure}
+
+
+    \section{Experimental Results}
+    \label{sec:experimental_results}
+    
+    Experimental validation was performed on the Armfield PCT23 heat exchanger described in Section~\ref{sec:practical_introduction}.
+    The goal was to verify the closed-loop behavior observed in simulations on the real device and to compare the Koopman-based MPC with the Strejc-based MPC under identical experimental conditions.
+    
+    The experiments were initialized at different outlet temperatures.
+    Before each MPC run we initiallized the starting temperatures using a PI controller acting on the pump speed.
+
+    
+    Regulation was performed to zero in normalized coordinates.
+    The corresponding reference temperature $x_{\text{target}}$ $= 63.808\,^{\circ}\mathrm{C}$ was computed from the measured steady-state mean obtained during the experimental day.
+    This value is consistent with the input mean $u_{\text{mean}}$ used during identification, but it does not correspond to the mean of the identification dataset itself.
+    The prediction horizon, cost function weights, constraints, and Kalman filter parameters were kept identical for both controllers, so that only the difference between the prediction models is compared.
+    
+    During the experiments, the outlet temperature $T_4$ was used as the feedback signal.
+    The heater loop and the pump in the secondary circuit were kept unchanged.
+    The only manipulated variable was the pump speed controlled by the MPC.
+    
+    \begin{figure}[!ht]
+        \centering
+        \includegraphics[width=0.95\textwidth]{images/compare_cl_T0_62.png}
+        \caption{Experimental closed-loop response and control input for the initial temperature $T_0 = 62\,^{\circ}\mathrm{C}$.}
+        \label{fig:cl_exp_T0_62}
+    \end{figure}
+    
+    Figure~\ref{fig:cl_exp_T0_62} shows the experimental closed-loop response for the case starting from
+    $T_0 = 62\,^{\circ}\mathrm{C}$.
+    Both controllers regulate the outlet temperature towards the operating point with a small steady-state offset.
+    
+    At the beginning of the experiment, the Koopman MPC applies a more aggressive control action.
+    For a short initial interval, the pump speed is driven close to its upper limit, which causes the outlet temperature to increase faster than in the Strejc case.
+    As a result, the Koopman MPC reaches a higher temperature earlier and remains closer to the reference during the transient.
+    After this initial phase, the control input is reduced and both controllers operate in a similar range.
+    
+    Over the full duration of the experiment, the Koopman MPC maintains smaller deviations from the reference.
+    For $T_0 = 62\,^{\circ}\mathrm{C}$, the RMSE is $0.597\,^{\circ}\mathrm{C}$ for the Koopman MPC compared to
+    $0.797\,^{\circ}\mathrm{C}$ for the Strejc MPC.
+    The corresponding IAE values are $159.4$ and $225.1$, respectively.
+    
+    \begin{figure}[!ht]
+        \centering
+        \includegraphics[width=\textwidth]{images/metrics_vs_T0_from55.png}
+        \caption{Experimental performance metrics (RMSE, IAE and objective value) evaluated for different initial outlet temperatures $T_0$.}
+        \label{fig:exp_metrics}
+    \end{figure}
+    
+    Figure~\ref{fig:exp_metrics} summarizes the experimental performance metrics for all tested initial conditions.
+    The RMSE decreases as the initial temperature approaches the operating point and reaches its minimum in the interval
+    $T_0 = 60$--$66\,^{\circ}\mathrm{C}$ for both controllers.
+    In this region, the Koopman MPC consistently achieves lower RMSE values.
+    For example, at $T_0 = 60\,^{\circ}\mathrm{C}$ the RMSE is $0.693\,^{\circ}\mathrm{C}$ for the Koopman MPC and
+    $0.723\,^{\circ}\mathrm{C}$ for the Strejc MPC.
+    
+    The IAE shows a similar dependence on the initial condition.
+    The lowest IAE values are obtained close to the operating point and increase as the initial temperature moves further away.
+    Across all tested cases, the Koopman MPC yields lower IAE values, indicating smaller accumulated tracking error.
+    At $T_0 = 55\,^{\circ}\mathrm{C}$, the IAE is $272.5$ for the Koopman MPC and $296.9$ for the Strejc MPC, while at
+    $T_0 = 68\,^{\circ}\mathrm{C}$ the values increase to $203.8$ and $248.8$, respectively.
+    
+    Table~\ref{tab:performance_metrics_exp} summarizes the performance metrics for all tested initial temperatures.
+
+    \begin{table}[!t]
+        \centering
+        \caption{Performance metrics for Koopman MPC and Strejc MPC obtained from experiments for different initial temperatures.}
+        \label{tab:performance_metrics_exp}
+        \begin{tabular}{c|ccc|ccc}
+        \hline
+        \multirow{2}{*}{$T_0$ [$^\circ$C]} &
+        \multicolumn{3}{c|}{Koopman MPC} &
+        \multicolumn{3}{c}{Strejc MPC} \\
+        & RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ &
+          RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ \\
+        \hline
+        55 & 2.004  & 272.46 & 365.86 & 1.872 & 296.91 & 316.18 \\
+        58 & 1.259  & 172.00 & 185.07 & 1.471 & 256.00 & 225.12 \\
+        60 & 0.693  & 128.34 & 74.84  & 0.723 & 147.94 & 59.08  \\
+        \rowcolor{gray!15}
+        62 & 0.597  & 159.42 & 73.19  & 0.797 & 225.07 & 74.61  \\
+        66 & 0.594  & 134.62 & 64.63  & 0.690 & 182.05 & 64.86  \\
+        68 & 0.922  & 203.83 & 141.72 & 1.009 & 248.83 & 143.66 \\
+        \hline
+        \textbf{Mean} &
+        \textbf{1.011} & \textbf{178.45} & \textbf{150.88} &
+        \textbf{1.094} & \textbf{226.13} & \textbf{147.25} \\
+        \textbf{Sum}  &
+        \textbf{6.068} & \textbf{1070.67} & \textbf{905.31} &
+        \textbf{6.563} & \textbf{1356.80} & \textbf{883.50} \\
+        \hline
+        \end{tabular}
+        \end{table}
+        
+
+    The objective function values are very similar for both controllers.
+    In most cases, the Strejc MPC gives a slightly lower objective value, which can be explained by smoother control actions and smaller changes of the input.
+    The Koopman MPC uses more aggressive input moves, mainly at the beginning of the run, which leads to faster regulation but also increases the contribution of the input term in the objective function.
+    
+    
+    The differences between the Koopman MPC and the Strejc MPC follow the same trend as in simulation and the steady-state behavior of both controllers is similar.
+    Biggest differences are visible at the beginning of the response. For the Koopman MPC, the first control move is sometimes estimated more aggressively, leading to a larger initial input change.
+    
+    
+    \newpage
+    \section*{Conclusions}
+    \label{sec:conclusions}
+
+    This work dealt with modeling and control of a plate heat exchanger using two different prediction models within an MPC framework. A classical first-order Strejc model identified from step responses was compared with a data-driven Koopman model obtained from measured data using a neural-network-based lifting. Both models were used as prediction models in MPC controllers with identical structure, constraints, and tuning, which allows a direct comparison of their behavior.
+    
+    System identification is described in Section~\ref{sec:strejc_ident} for the Strejc model and in Section~\ref{sec:koopman_identification} for the Koopman model. The Strejc model captures the dominant dynamics of the heat exchanger with a simple structure and provides stable predictions around the operating point. The Koopman model represents the system in a higher-dimensional lifted space and is able to describe the nonlinear behavior of the heat exchanger directly from data.
+    
+    The MPC design is presented in Section~\ref{sec:mpc_design}. Both controllers were formulated in normalized coordinates with regulation to zero, corresponding to a chosen operating temperature. The same prediction horizon, cost function weights, constraints, and Kalman filter parameters were used for both controllers so that differences in closed-loop behavior are caused by the prediction models and not by controller tuning.
+    
+    Closed-loop simulations in Section~\ref{sec:simulation_results} show that both controllers regulate the outlet temperature of the heat exchanger without instability. For initial conditions close to the operating point, the tracking error is small for both approaches. For larger deviations, the Koopman MPC typically achieves lower RMSE and IAE values. This is mainly related to a more aggressive initial control action, which drives the system faster towards the reference. The Strejc MPC applies smoother input changes, which often leads to a slightly lower or comparable objective function value, even when the tracking error is higher.
+    
+    Experimental results in Section~\ref{sec:experimental_results} confirm these observations on the real heat exchanger. Both controllers work well on the physical system and are able to regulate the outlet temperature under real disturbances and measurement noise. The performance metrics are mostly consistent with the simulation results. Compared to simulation, the control signals on the real heat exchanger are more irregular, mainly due to disturbances and dynamics that are not captured by the models.
+    This is particularly visible for the Koopman MPC, where the first control move can be estimated more aggressively.
+
+
+
+    The comparison shows that the Koopman-based MPC usually achieves lower RMSE, especially at the beginning of regulation. This behavior is mainly caused by a more aggressive initial control action. The Strejc-based MPC is based on a simpler model and produces smoother input trajectories, which can be an advantage when large or fast changes of the manipulated variable are unwanted.
+
+    In this work, the Koopman model was identified for a SISO configuration, with Pump~F as the manipulated variable and the outlet temperature $T_4$ as the controlled output. A change of the controlled variable, manipulated input, or operating regime would require a new identification step. An advantage of the Koopman framework is that the model can be updated directly from measured data, while the MPC formulation can remain unchanged.
+    
+    Overall, both MPC approaches are applicable to the plate heat exchanger. The results indicate a trade-off between model simplicity and achievable tracking performance, with the Koopman-based MPC providing lower tracking errors and the Strejc-based MPC producing smoother control actions.
+    

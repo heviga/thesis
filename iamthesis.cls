@@ -35,6 +35,13 @@
 \RequirePackage[utf8]{inputenc}
 \RequirePackage{microtype}
 \RequirePackage{eurosym}
+\RequirePackage[numbers,square,sort&compress]{natbib}
+\RequirePackage{url}        % už máš
+% Load hyperref with desired options before doi (which would load it automatically)
+\usepackage[bookmarks=true,hidelinks,linkcolor=dark_blue,
+pdfstartview={FitV},citecolor=ddark_green,linktoc=all,pdfauthor={IAM thesis 
+template},urlcolor=blue]{hyperref}
+\RequirePackage{doi}
 
 
 %----------------------------------------------------------------%
@@ -66,6 +73,13 @@
 \RequirePackage{tabularx}
 \RequirePackage{paralist}
 \RequirePackage{subfigure}
+\RequirePackage[table]{xcolor}
+\RequirePackage{svg}
+\svgsetup{
+  inkscapeexe={"C:/Program Files/Inkscape/bin/inkscape.exe"},
+  inkscapeversion=1
+}
+
 %----------------------------------------------------------------%
 
 %----------------------------------------------------------------%
@@ -73,7 +87,6 @@
 \RequirePackage{fancyhdr}
 \RequirePackage{lastpage}
 \RequirePackage{pdfpages}
-\RequirePackage{natbib}
 \RequirePackage{nicefrac}
 \RequirePackage{amsthm}
 \RequirePackage{thmtools}
@@ -92,10 +105,8 @@
 %----------------------------------------------------------------%
 %   HYPERLINKS                                                   %
 %   http://en.wikibooks.org/wiki/LaTeX/Hyperlinks                %
+%   Note: hyperref is now loaded earlier (before doi) to avoid option clash
 %----------------------------------------------------------------%
-\usepackage[bookmarks=true,colorlinks=false,linkcolor=dark_blue,
-pdfstartview={FitV},citecolor=ddark_green,linktoc=all,pdfauthor={IAM thesis 
-template},urlcolor=blue]{hyperref}
 
 %----------------------------------------------------------------%
 %    PAGE GEOMETRY
@@ -181,13 +192,15 @@ template},urlcolor=blue]{hyperref}
 \end{center}
 \ifstringequal{\thesislevel}{min}{
 	%
-}{%
-\if\slovak1
-Evidenčné číslo: FCHPT-\thesisnumber
-\else
-Reg. No.: FCHPT-\thesisnumber
-\fi
-}
+}%{%
+%\if\slovak1
+%Evidenčné číslo: FCHPT-\thesisnumber
+%\else
+%Reg. No.: FCHPT-\thesisnumber
+%\fi
+%}
+
+
 \begin{center}
 \vspace{100pt}
 \textbf{\huge \thesistitle}
@@ -214,7 +227,7 @@ Reg. No.: FCHPT-\thesisnumber
 
 \newpage
 \thispagestyle{empty}
-\phantom{M}
+%\phantom{M}
 
 \newpage
 \thispagestyle{empty}
@@ -232,13 +245,13 @@ Reg. No.: FCHPT-\thesisnumber
 \end{center}
 \ifstringequal{\thesislevel}{min}{
 	%
-}{%
-\if\slovak1
-Evidenčné číslo: FCHPT-\thesisnumber
-\else
-Reg. No.: FCHPT-\thesisnumber
-\fi
-}
+}%{%
+%\if\slovak1
+%Evidenčné číslo: FCHPT-\thesisnumber
+%\else
+%Reg. No.: FCHPT-\thesisnumber
+%\fi
+%}
 
 \begin{center}
 \vspace{100pt}
@@ -270,6 +283,7 @@ Reg. No.: FCHPT-\thesisnumber
 Školiace pracovisko:        &\thesisinst   
 \\
 Vedúci práce:   &\thesissupervisor \\
+Konzultant:     &\thesisconsultant \\
 \end{tabular}	
 \else
 \begin{tabular}{ll}
@@ -277,6 +291,7 @@ Study programme:     & Process Control    \\
 Study field:         & Cybernetics \\
 Training workspace:        &\thesisinst   \\
 Thesis supervisor:   & \thesissupervisor \\
+Consultant:          & \thesisconsultant \\
 \end{tabular}	
 \fi		
 \end{small}
@@ -284,20 +299,21 @@ Thesis supervisor:   & \thesissupervisor \\
 \textbf{\large \thesisyear} \hfill \textbf{\large \thesisauthor}
 \newpage
 \thispagestyle{empty}
-\phantom{M}
+%\phantom{M}
 }
 
-\newcommand{\providebibliography}{
-%	\renewcommand{\sectionmark}[1]{\markright{#1}}
-\if\slovak1
-\sectionmark{Literatúra}
-\addcontentsline{toc}{chapter}{Literatúra}
-\else
-\sectionmark{Bibliography}
-\addcontentsline{toc}{chapter}{Bibliography}
-\fi
-\bibliographystyle{plain}
+\newcommand{\providebibliography}{%
+  \if\slovak1
+    \sectionmark{Literatúra}%
+    \addcontentsline{toc}{chapter}{Literatúra}%
+  \else
+    \sectionmark{Bibliography}%
+    \addcontentsline{toc}{chapter}{Bibliography}%
+  \fi
+  \bibliographystyle{unsrtnat}%
+  \bibliography{bibfile}%
 }
+
 
 %----------------------------------------------------------------%
 %   Define macros

@@ -1,186 +1,319 @@
-\chapter{Theory}
+\chapter{Theoretical Background}
+\label{ch:theory}
 
-\section{First Section}
-Some theory... 
+This chapter presents the theoretical background for the modeling and control approaches used in this thesis. 
+It begins with classical linear modeling based on the Strejc model, which serves as a baseline representation of the heat exchanger dynamics. 
+Subsequently, the Koopman operator framework is introduced as a data-driven approach for modeling nonlinear system behavior using lifted linear representations.
+
+Model Predictive Control (MPC) is then presented as the main control strategy used in this work. 
+The chapter also introduces the Kalman filter (KF), which is used for state estimation in both the Strejc-based and Koopman-based control schemes. 
+Finally, the complete Koopman-based MPC structure is described, combining the Koopman prediction model, state estimation, and constrained optimal control into a single control framework.
+
+\section{Linear Model Identified from Step Response}
+
+In this work, a simple linear model of the heat exchanger is obtained 
+from step-response experiments. The model serves as a baseline 
+approximation of the system dynamics and is primarily used for 
+comparison with the data-driven Koopman model.
+
+The identification is based on measured step-response data, where a step 
+change is applied to the input signal and the corresponding output 
+temperature response is recorded. From the shape of the measured response, 
+the system dynamics are approximated by a first-order linear model.
+
+The continuous-time transfer function of the model is expressed as
 \begin{equation}
-	a^2 + b^2 = c^2
+G(s) = \frac{K}{T s + 1},
+\end{equation}
+where $K$ denotes the steady-state gain and $T$ is the dominant time 
+constant of the system.
+
+The steady-state gain $K$ is determined from the ratio of the steady-state 
+change in the output to the applied step change in the input,
+\begin{equation}
+K = \frac{\Delta y_{\mathrm{ss}}}{\Delta u},
+\end{equation}
+where $\Delta u$ is the magnitude of the input step and 
+$\Delta y_{\mathrm{ss}}$ is the corresponding steady-state change in the output.
+
+The time constant $T$ characterizes the speed of the system response and 
+is defined as the time required for the output to reach approximately 
+$63.2\%$ of its final steady-state value after the input step is applied. 
+This value follows from the analytical step response of a first-order system 
+and can be estimated directly from the measured data as the time instant 
+at which
+\begin{equation}
+y(t) = y_0 + 0.632 \, \Delta y_{\mathrm{ss}},
+\end{equation}
+where $y_0$ is the initial output value before the step change.
+
+For the purpose of digital control design, the identified model is 
+converted into a discrete-time state-space representation. The resulting 
+model can be written as
+\begin{equation}
+x_{k+1} = A x_k + B u_k,
+\label{eq:strejc_state}
+\end{equation}
+\begin{equation}
+y_k = C x_k + D u_k,
+\end{equation}
+where $x_k \in \mathbb{R}$ represents the system state, $u_k \in \mathbb{R}$ 
+is the control input, and $y_k \in \mathbb{R}$ is the measured output 
+temperature. The matrices $A$, $B$, $C$, and $D$ are obtained from the 
+identified continuous-time model using discretization with a fixed 
+sampling time. In this work, the direct feedthrough term $D$ is assumed 
+to be zero.
+
+As a linear approximation identified from step-response data, the model 
+is valid mainly in the operating region where the experiment was 
+performed. Its accuracy may decrease when the system operates far from 
+this region or when nonlinear effects become significant.
+
+
+\section{Koopman Operator}
+\label{sec:Koopman_operator}
+
+The Koopman operator framework provides a powerful approach for modeling nonlinear dynamical systems by representing their evolution through linear dynamics in an augmented state space. Instead of directly describing the nonlinear evolution of the physical system states, the Koopman framework introduces lifted states composed of nonlinear functions of the measured variables and inputs. This transformation allows the nonlinear system dynamics to be approximated by a linear model that can be used for analysis and control.
+
+
+Consider a discrete-time nonlinear system described by
+\begin{equation}
+x_{k+1} = f(x_k, u_k),
+\end{equation}
+where $f$ represents a generally nonlinear function describing the system dynamics, mapping the current state $x_k$ and input $u_k$ to the next state $x_{k+1}$.
+
+The Koopman framework defines a lifting transformation
+\begin{equation}
+z_k = g(x_k, u_k),
+\label{eq:koopman_states}
+\end{equation}
+which maps the measured variables into a higher-dimensional space of lifted states. In this lifted state space, the system dynamics can be approximated by a linear model of the form
+\begin{equation}
+z_{k+1} = A_{\mathcal{K}} z_k + B_{\mathcal{K}} u_k,
+\label{eq:koopman_state}
 \end{equation}
 
-\section{Second Section}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent pulvinar 
-lobortis justo, quis vulputate quam gravida id. Sed massa libero, fermentum at 
-convallis a, fringilla at massa. Cras condimentum vel urna in accumsan. Morbi 
-cursus risus eu magna efficitur rhoncus. Nullam tincidunt sit amet sapien non 
-auctor. Morbi varius eros massa, nec tincidunt odio rhoncus et. Etiam sed orci 
-sagittis, dapibus erat nec, venenatis velit. Ut malesuada, justo vel consequat 
-ullamcorper, sem justo tristique purus, ac vulputate nulla lorem eu metus. In 
-convallis orci mi, a varius est blandit a. Cras non gravida turpis, elementum 
-molestie nisl. Duis in blandit magna.
+\begin{equation}
+\hat{y}_k = C_{\mathcal{K}} z_k,
+\label{eq:koopman_output}
+\end{equation}
+where $z_k \in \mathbb{R}^{n_z}$ denotes the lifted state vector, 
+$u_k \in \mathbb{R}^{n_u}$ is the control input, and 
+$\hat{y}_k \in \mathbb{R}^{n_y}$ is the predicted system output. 
+The matrix $A_{\mathcal{K}} \in \mathbb{R}^{n_z \times n_z}$ describes the linear evolution of the lifted states, 
+$B_{\mathcal{K}} \in \mathbb{R}^{n_z \times n_u}$ maps the control input to the lifted state dynamics, 
+and $C_{\mathcal{K}} \in \mathbb{R}^{n_y \times n_z}$ projects the lifted states to the output space.
 
-\subsection{A Subsection}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent pulvinar 
-lobortis justo, quis vulputate quam gravida id. Sed massa libero, fermentum at 
-convallis a, fringilla at massa. Cras condimentum vel urna in accumsan. Morbi 
-cursus risus eu magna efficitur rhoncus. Nullam tincidunt sit amet sapien non 
-auctor. Morbi varius eros massa, nec tincidunt odio rhoncus et. Etiam sed orci 
-sagittis, dapibus erat nec, venenatis velit. Ut malesuada, justo vel consequat 
-ullamcorper, sem justo tristique purus, ac vulputate nulla lorem eu metus. In 
-convallis orci mi, a varius est blandit a. Cras non gravida turpis, elementum 
-molestie nisl. Duis in blandit magna.
+The overall structure of the Koopman-based representation, including the lifting function, linear dynamics in the lifted space, and output projection, is shown in Fig.~\ref{fig:koopman_operator}.
+\begin{figure}[htbp]
+    \centering
+    \def\svgwidth{\textwidth}
+    \input{svg-inkscape/FirstDIag_svg-tex.pdf_tex}
+    \caption{Koopman operator-based representation with lifting, linear dynamics in the lifted state space, and output projection.}
+    \label{fig:koopman_operator}
+  \end{figure}
+  
+  
+  
 
-Sed consequat odio at elementum mollis. Fusce lacinia vulputate magna, vel 
-consequat justo sagittis sit amet. Vestibulum lorem lectus, aliquet vitae 
-malesuada non, congue ac libero. Aliquam volutpat mi varius odio scelerisque, 
-sed semper sem feugiat. Morbi mauris tellus, auctor vitae commodo id, bibendum 
-ut ante. Maecenas condimentum mauris tellus, eu eleifend purus rhoncus non. 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ante ipsum 
-primis in faucibus orci luctus et ultrices posuere cubilia Curae; Integer vel 
-lorem vulputate magna faucibus aliquam. Donec in erat imperdiet, rutrum velit 
-quis, tempor tortor. Maecenas aliquam ligula dolor, eu mollis ante tempor eget.
+The Koopman operator, originally introduced by Koopman~\cite{koopman1931} and later developed by Mezi\'c~\cite{mezic2005}, is defined as an infinite-dimensional linear operator. Since such a representation cannot be used directly in practical applications, finite-dimensional approximations are constructed from measured data. These approximations rely on a finite set of lifted states generated by a chosen lifting function $g(\cdot)$.
 
-Interdum et malesuada fames ac ante ipsum primis in faucibus. In justo ligula, 
-lacinia quis iaculis ac, ullamcorper eu metus. Donec nibh diam, elementum vitae 
-leo non, lacinia faucibus eros. Nulla volutpat lacus et ante imperdiet 
-interdum. Aliquam pretium urna a ullamcorper aliquam. Fusce fermentum lorem ac 
-turpis feugiat pulvinar. Proin felis est, sodales eu pretium at, consequat at 
-libero. Aliquam facilisis sapien non justo consectetur semper. Morbi rhoncus 
-leo sit amet mattis ullamcorper.
 
-\subsection{A Subsection with Figure}
+The lifting transformation $g(\cdot)$ maps the original system variables into a higher-dimensional space, such that the lifted state vector satisfies $z_k \in \mathbb{R}^{n_z}$, where typically $n_z \gg n_x$, with $n_x$ denoting the dimension of the original system state.
+As a result, the Koopman system matrices have dimensions
+\begin{equation}
+A_{\mathcal{K}} \in \mathbb{R}^{n_z \times n_z}, \quad
+B_{\mathcal{K}} \in \mathbb{R}^{n_z \times n_u}, \quad
+C_{\mathcal{K}} \in \mathbb{R}^{n_y \times n_z},
+\end{equation}
+where $n_u$ and $n_y$ denote the dimensions of the input and output, respectively.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent pulvinar 
-lobortis justo, quis vulputate quam gravida id. Sed massa libero, fermentum at 
-convallis a, fringilla at massa. Cras condimentum vel urna in accumsan. Morbi 
-cursus risus eu magna efficitur rhoncus. Nullam tincidunt sit amet sapien non 
-auctor. Morbi varius eros massa, nec tincidunt odio rhoncus et. Etiam sed orci 
-sagittis, dapibus erat nec, venenatis velit. Ut malesuada, justo vel consequat 
-ullamcorper, sem justo tristique purus, ac vulputate nulla lorem eu metus. In 
-convallis orci mi, a varius est blandit a. Cras non gravida turpis, elementum 
-molestie nisl. Duis in blandit magna.
+For example, a system with a single measured state ($n_x = 1$), may be lifted to a state vector of dimension $n_z = 10$ by including nonlinear features of the measured temperature and input signal. This results in a Koopman model with matrices $A_{\mathcal{K}} \in \mathbb{R}^{10 \times 10}$ and $B_{\mathcal{K}} \in \mathbb{R}^{10 \times 1}$, while preserving a linear structure suitable for prediction and control.
+The selection of the lifted state dimension represents a trade-off between model accuracy and computational complexity. In practice, the dimension $n_z$ is determined by the chosen lifting function and identification method and is typically selected based on empirical performance and computational considerations \cite{korda2018}.
 
-Sed consequat odio at elementum mollis. Fusce lacinia vulputate magna, vel 
-consequat justo sagittis sit amet. Vestibulum lorem lectus, aliquet vitae 
-malesuada non, congue ac libero. Aliquam volutpat mi varius odio scelerisque, 
-sed semper sem feugiat. Morbi mauris tellus, auctor vitae commodo id, bibendum 
-ut ante. Maecenas condimentum mauris tellus, eu eleifend purus rhoncus non. 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ante ipsum 
-primis in faucibus orci luctus et ultrices posuere cubilia Curae; Integer vel 
-lorem vulputate magna faucibus aliquam. Donec in erat imperdiet, rutrum velit 
-quis, tempor tortor. Maecenas aliquam ligula dolor, eu mollis ante tempor eget.
 
-Interdum et malesuada fames ac ante ipsum primis in faucibus. In justo ligula, 
-lacinia quis iaculis ac, ullamcorper eu metus. Donec nibh diam, elementum vitae 
-leo non, lacinia faucibus eros. Nulla volutpat lacus et ante imperdiet 
-interdum. Aliquam pretium urna a ullamcorper aliquam. Fusce fermentum lorem ac 
-turpis feugiat pulvinar. Proin felis est, sodales eu pretium at, consequat at 
-libero. Aliquam facilisis sapien non justo consectetur semper. Morbi rhoncus 
-leo sit amet mattis ullamcorper.
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent pulvinar 
-lobortis justo, quis vulputate quam gravida id. Sed massa libero, fermentum at 
-convallis a, fringilla at massa. Cras condimentum vel urna in accumsan. Morbi 
-cursus risus eu magna efficitur rhoncus. Nullam tincidunt sit amet sapien non 
-auctor. Morbi varius eros massa, nec tincidunt odio rhoncus et. Etiam sed orci 
-sagittis, dapibus erat nec, venenatis velit. Ut malesuada, justo vel consequat 
-ullamcorper, sem justo tristique purus, ac vulputate nulla lorem eu metus. In 
-convallis orci mi, a varius est blandit a. Cras non gravida turpis, elementum 
-molestie nisl. Duis in blandit magna.
+In this work, a data-driven identification procedure is used to obtain a Koopman-based prediction model from experimental measurements.
+The individual steps of the identification process are summarized below.
 
-Sed consequat odio at elementum mollis. Fusce lacinia vulputate magna, vel 
-consequat justo sagittis sit amet. Vestibulum lorem lectus, aliquet vitae 
-malesuada non, congue ac libero. Aliquam volutpat mi varius odio scelerisque, 
-sed semper sem feugiat. Morbi mauris tellus, auctor vitae commodo id, bibendum 
-ut ante. Maecenas condimentum mauris tellus, eu eleifend purus rhoncus non. 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ante ipsum 
-primis in faucibus orci luctus et ultrices posuere cubilia Curae; Integer vel 
-lorem vulputate magna faucibus aliquam. Donec in erat imperdiet, rutrum velit 
-quis, tempor tortor. Maecenas aliquam ligula dolor, eu mollis ante tempor eget.
 
-Interdum et malesuada fames ac ante ipsum primis in faucibus. In justo ligula, 
-lacinia quis iaculis ac, ullamcorper eu metus. Donec nibh diam, elementum vitae 
-leo non, lacinia faucibus eros. Nulla volutpat lacus et ante imperdiet 
-interdum. Aliquam pretium urna a ullamcorper aliquam. Fusce fermentum lorem ac 
-turpis feugiat pulvinar. Proin felis est, sodales eu pretium at, consequat at 
-libero. Aliquam facilisis sapien non justo consectetur semper. Morbi rhoncus 
-leo sit amet mattis ullamcorper.
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent pulvinar 
-lobortis justo, quis vulputate quam gravida id. Sed massa libero, fermentum at 
-convallis a, fringilla at massa. Cras condimentum vel urna in accumsan. Morbi 
-cursus risus eu magna efficitur rhoncus. Nullam tincidunt sit amet sapien non 
-auctor. Morbi varius eros massa, nec tincidunt odio rhoncus et. Etiam sed orci 
-sagittis, dapibus erat nec, venenatis velit. Ut malesuada, justo vel consequat 
-ullamcorper, sem justo tristique purus, ac vulputate nulla lorem eu metus. In 
-convallis orci mi, a varius est blandit a. Cras non gravida turpis, elementum 
-molestie nisl. Duis in blandit magna.
+\begin{itemize}
+    \item Experimental data are obtained from the plate heat exchanger by applying step changes to the manipulated variable and recording the resulting outlet temperature.
 
-Sed consequat odio at elementum mollis. Fusce lacinia vulputate magna, vel 
-consequat justo sagittis sit amet. Vestibulum lorem lectus, aliquet vitae 
-malesuada non, congue ac libero. Aliquam volutpat mi varius odio scelerisque, 
-sed semper sem feugiat. Morbi mauris tellus, auctor vitae commodo id, bibendum 
-ut ante. Maecenas condimentum mauris tellus, eu eleifend purus rhoncus non. 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ante ipsum 
-primis in faucibus orci luctus et ultrices posuere cubilia Curae; Integer vel 
-lorem vulputate magna faucibus aliquam. Donec in erat imperdiet, rutrum velit 
-quis, tempor tortor. Maecenas aliquam ligula dolor, eu mollis ante tempor eget.
+    \item The measured signals are preprocessed and scaled, and the data are organized into input--output pairs of the form $(x_k, u_k)$ and $x_{k+1}$.
 
-Interdum et malesuada fames ac ante ipsum primis in faucibus. In justo ligula, 
-lacinia quis iaculis ac, ullamcorper eu metus. Donec nibh diam, elementum vitae 
-leo non, lacinia faucibus eros. Nulla volutpat lacus et ante imperdiet 
-interdum. Aliquam pretium urna a ullamcorper aliquam. Fusce fermentum lorem ac 
-turpis feugiat pulvinar. Proin felis est, sodales eu pretium at, consequat at 
-libero. Aliquam facilisis sapien non justo consectetur semper. Morbi rhoncus 
-leo sit amet mattis ullamcorper.
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent pulvinar 
-lobortis justo, quis vulputate quam gravida id. Sed massa libero, fermentum at 
-convallis a, fringilla at massa. Cras condimentum vel urna in accumsan. Morbi 
-cursus risus eu magna efficitur rhoncus. Nullam tincidunt sit amet sapien non 
-auctor. Morbi varius eros massa, nec tincidunt odio rhoncus et. Etiam sed orci 
-sagittis, dapibus erat nec, venenatis velit. Ut malesuada, justo vel consequat 
-ullamcorper, sem justo tristique purus, ac vulputate nulla lorem eu metus. In 
-convallis orci mi, a varius est blandit a. Cras non gravida turpis, elementum 
-molestie nisl. Duis in blandit magna.
 
-Sed consequat odio at elementum mollis. Fusce lacinia vulputate magna, vel 
-consequat justo sagittis sit amet. Vestibulum lorem lectus, aliquet vitae 
-malesuada non, congue ac libero. Aliquam volutpat mi varius odio scelerisque, 
-sed semper sem feugiat. Morbi mauris tellus, auctor vitae commodo id, bibendum 
-ut ante. Maecenas condimentum mauris tellus, eu eleifend purus rhoncus non. 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ante ipsum 
-primis in faucibus orci luctus et ultrices posuere cubilia Curae; Integer vel 
-lorem vulputate magna faucibus aliquam. Donec in erat imperdiet, rutrum velit 
-quis, tempor tortor. Maecenas aliquam ligula dolor, eu mollis ante tempor eget.
+    \item A nonlinear lifting function $g(\cdot)$ is learned from the measured data using a neural network.
+    The neural network (encoder) is used to map the measured variables into a higher-dimensional lifted state space $z_k = g(x_k)$. 
 
-Interdum et malesuada fames ac ante ipsum primis in faucibus. In justo ligula, 
-lacinia quis iaculis ac, ullamcorper eu metus. Donec nibh diam, elementum vitae 
-leo non, lacinia faucibus eros. Nulla volutpat lacus et ante imperdiet 
-interdum. Aliquam pretium urna a ullamcorper aliquam. Fusce fermentum lorem ac 
-turpis feugiat pulvinar. Proin felis est, sodales eu pretium at, consequat at 
-libero. Aliquam facilisis sapien non justo consectetur semper. Morbi rhoncus 
-leo sit amet mattis ullamcorper.
 
-\begin{figure}
-	\centering
-	\includegraphics[width = 0.5\textwidth]{images/fchpt_logo_color}
-	\caption{A figure caption.}
-	\label{fig:label}
-\end{figure}
+    \item In the lifted space, the system dynamics are modeled as a linear system
+    \begin{equation}
+        z_{k+1} = A_{\mathcal K} z_k + B_{\mathcal K} u_k,
+    \end{equation}
+    where the matrices $A_{\mathcal K}$ and $B_{\mathcal K}$ are trainable parameters.
 
-Maecenas posuere maximus ipsum, eget laoreet risus malesuada faucibus. Nam 
-tincidunt at diam quis vestibulum. Nullam a tortor vestibulum, pellentesque 
-diam eu, venenatis neque. Duis id egestas lacus. Cras condimentum lorem sit 
-amet posuere venenatis. Vestibulum ante ipsum primis in faucibus orci luctus et 
-ultrices posuere cubilia Curae; Morbi convallis at ipsum vitae tincidunt. Proin 
-vel massa eget ligula accumsan convallis vitae sit amet est. Aliquam nisl 
-felis, pharetra non purus malesuada, convallis faucibus est. Nulla odio nisi, 
-tempus sed rhoncus vitae, accumsan vel nisl. Nunc varius tincidunt felis, ut 
-iaculis lectus volutpat vitae. Vivamus id lectus sit amet nulla volutpat 
-congue. Nunc fermentum sem ac neque feugiat lobortis. In vestibulum, nisi a 
-condimentum posuere, urna enim dapibus ex, in ultricies est enim hendrerit ex.
+    \item The predicted output is obtained using a linear decoder
+    \begin{equation}
+        \hat{y}_k = C_{\mathcal K} z_k,
+    \end{equation}
+    where $C_{\mathcal K}$ is also learned from data.
 
-Duis feugiat ac elit id molestie. Nullam a massa viverra, ornare odio nec, 
-tempor enim. Proin suscipit est at leo bibendum ultricies. Curabitur ornare 
-malesuada suscipit. Vivamus mollis orci at ante pellentesque, eu feugiat eros 
-finibus. Curabitur facilisis, velit quis aliquet molestie, nunc nibh facilisis 
-orci, ut porttitor neque tellus eget quam. Vivamus sollicitudin, ex non egestas 
-consequat, tortor nulla tempor ligula, eget facilisis lectus quam nec metus. 
-Etiam ornare ornare varius. Nulla facilisi. Nunc facilisis dui eget metus 
-dictum, eu maximus felis semper. Morbi non aliquam est.
+    \item The encoder parameters and the Koopman matrices are identified simultaneously by minimizing a multi-step prediction loss over measured trajectories using gradient-based optimization.
+
+
+    \item The neural network is used only during the identification phase to define the lifting transformation.
+    It is not used for state prediction and is not part of the closed-loop controller.
+
+\end{itemize}
+
+The overall optimization problem can be formulated as
+\begin{equation}
+\min_{\theta, A_{\mathcal K}, B_{\mathcal K}, C_{\mathcal K}}
+\sum_{k=1}^{N}
+\left\| y_k - \hat{y}_k \right\|_2^2,
+\end{equation}
+where $\theta$ denotes the neural network parameters defining the lifting transformation. 
+The matrices $A_{\mathcal K}$, $B_{\mathcal K}$, and $C_{\mathcal K}$ are therefore not computed analytically, but are obtained as the result of joint optimization with the neural network encoder.
+
+
+Once the matrices are identified, the resulting Koopman model is a standard linear state-space model defined in the lifted coordinates.
+This linear Koopman model is subsequently used as the prediction model in the MPC controller and is compared with a classical MPC based on a first-order Strejc model using the same tuning and constraints.
+
+
+
+
+\section{Model Predictive Control}
+\label{sec:MPC}
+
+Model Predictive Control (MPC) is an advanced control strategy based on the repeated solution of a constrained finite-horizon optimization problem \cite{rawlings_mpc}. At each sampling instant, a prediction model is used to predict future system behavior over a predefined prediction horizon, and an optimal sequence of control inputs is computed.
+
+MPC operates according to the receding horizon principle. Although an optimal input sequence is computed over the prediction horizon, only the first control input is applied to the system. At the next sampling instant, the optimization problem is solved again using updated state estimates.
+
+In this work, MPC is formulated for discrete-time linear systems described by the state-space model
+\begin{equation}
+x_{k+1} = A x_k + B u_k,
+\end{equation}
+\begin{equation}
+y_k = C x_k + D u_k,
+\end{equation}
+where $x_k \in \mathbb{R}^n$ denotes the system state vector, $u_k \in \mathbb{R}^m$ is the control input, and $y_k \in \mathbb{R}^p$ is the system output. The matrices $A$, $B$, $C$, and $D$ describe the discrete-time prediction model. In many thermal systems, including the system considered in this work, the direct feedthrough term $D$ is zero or negligible.
+
+The control objective is regulation to a steady-state operating point. This objective is expressed through a quadratic cost function that penalizes deviations of the predicted output from zero and excessive control effort. The MPC optimization problem solved at each sampling instant is given by
+\begin{equation}
+    \begin{aligned}
+    \min_{\{u_k\}_{k=0}^{N-1}} \quad &
+    \sum_{k=0}^{N-1}
+    \left(
+    \|y_k\|_Q^2 + \|u_k\|_R^2
+    \right) \\
+    \text{s.t.} \quad
+    & x_{k+1} = A x_k + B u_k, \\
+    & y_k = C x_k + D u_k, \\
+    & u_{\min} \le u_k \le u_{\max}, \\
+    & y_{\min} \le y_k \le y_{\max}, \\
+    & x_{0} = \hat{x}_0 .
+    \end{aligned}
+    \label{eq:mpc_optimization}
+    \end{equation}
+    
+    
+where $N$ denotes the prediction horizon, $\hat{x}_0$ is the estimated system state at the current sampling instant, and $Q \succeq 0$ and $R \succ 0$ are weighting matrices. The matrix $Q$ determines the importance of output regulation, while $R$ penalizes aggressive control actions.
+
+Input and output constraints reflect physical and operational limitations of the controlled system. In thermal processes, input constraints typically represent actuator saturation, while output constraints are used to keep temperatures within safe operating limits \cite{mpc_heat_exchanger}.
+
+The prediction horizon $N$ affects both control performance and computational complexity. In practical implementations, it is selected as a compromise between prediction accuracy and real-time fcomputational requirements. For our work we used $N = 20$, which gave sufficient results.
+
+This MPC formulation is used consistently for both the Strejc-based and Koopman-based prediction models. The difference between the two control approaches lies only in the prediction model matrices used within the optimization problem, allowing a direct and fair comparison.
+
+
+\section{Kalman Filter}
+\label{sec:KF}
+
+The Kalman filter (KF) is a state estimation method used to estimate the internal states of dynamic systems based on a mathematical model and noisy measurements. In control applications, it provides reliable state estimates for feedback controllers, particularly when not all system states are directly measurable \cite{kalman1960,ljung_sysid}.
+
+Consider a discrete-time linear system with process and measurement noise described by
+\begin{equation}
+x_{k+1} = A x_k + B u_k + w_k,
+\end{equation}
+\begin{equation}
+y_k = C x_k + v_k,
+\end{equation}
+where $w_k$ and $v_k$ denote zero-mean Gaussian process and measurement noise, respectively.
+
+The KF computes an optimal estimate of the system state in the minimum mean-square error sense under the assumption of Gaussian noise. The estimation algorithm consists of two main steps: prediction and correction. The notation $\hat{x}_{k|k}$ denotes the estimate of the system state at time $k$ given measurements up to time $k$, while $\hat{x}_{k|k-1}$ represents the predicted state estimate prior to incorporating the current measurement.
+
+In the prediction step, the state estimate and its covariance are propagated using the system model,
+\begin{equation}
+\hat{x}_{k|k-1} = A \hat{x}_{k-1|k-1} + B u_{k-1},
+\end{equation}
+\begin{equation}
+P_{k|k-1} = A P_{k-1|k-1} A^\top + Q_{\mathrm{KF}},
+\end{equation}
+where $P_{k|k-1}$ denotes the prediction error covariance matrix, $Q_{\mathrm{KF}}$ is the process noise covariance matrix of the Kalman filter, and $u_{k-1}$ denotes the control input applied at the previous sampling instant.
+
+In the correction step, the predicted state estimate is updated using the current measurement,
+\begin{equation}
+K_k = P_{k|k-1} C^\top \left( C P_{k|k-1} C^\top + R_{\mathrm{KF}} \right)^{-1},
+\end{equation}
+\begin{equation}
+\hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \left( y_k - C \hat{x}_{k|k-1} \right),
+\end{equation}
+\begin{equation}
+P_{k|k} = (I - K_k C) P_{k|k-1},
+\end{equation}
+where $P_{k|k}$ is the updated estimation error covariance matrix, $R_{\mathrm{KF}}$ denotes the measurement noise covariance matrix of the Kalman filter, $K_k$ is the Kalman gain and $I \in \mathbb{R}^{n \times n}$ is the identity matrix.
+
+
+In this work, the KF is used to estimate the system state required by the MPC controller. In the Koopman-based MPC implementation, the KF is applied in the lifted state space and estimates the Koopman state vector used for prediction and control. In contrast, in the Strejc-based MPC, the KF estimates the internal state of the first-order linear model representing the dominant thermal dynamics of the system. The same estimation structure is used in both control approaches, ensuring a consistent state estimation framework for the subsequent comparison.
+
+
+\section{Koopman-Based Model Predictive Control}
+
+Koopman-based Model Predictive Control (Koopman MPC) combines the standard linear MPC framework with a data-driven Koopman model and a Kalman filter for state estimation. 
+In contrast to the classical MPC based on a first-order Strejc model, the prediction model in Koopman MPC is formulated in the lifted state space introduced in Section~\ref{sec:Koopman_operator}. 
+The lifted-state dynamics and output mapping given by equations~\eqref{eq:koopman_state} and~\eqref{eq:koopman_output} are directly used within the MPC prediction scheme \cite{korda2018,koopman_mpc_review}.
+
+From the perspective of MPC, the Koopman-based prediction model is treated as a standard linear state-space model.
+The same quadratic cost function and input and output constraints as in classical MPC are employed.
+The main difference lies in the prediction model, which operates on the lifted state vector $z_k$, and in the use of a state estimator to initialize the prediction.
+
+At each sampling instant, the Koopman MPC controller solves the following finite-horizon optimization problem
+\begin{equation}
+\begin{aligned}
+\min_{\{u_k\}_{k=0}^{N-1}} \quad &
+\sum_{k=0}^{N-1}
+\left(
+\|y_k\|_Q^2 + \|u_k\|_R^2
+\right) \\
+\text{s.t.} \quad &
+z_{k+1} = A_{\mathcal{K}} z_k + B_{\mathcal{K}} u_k, \\
+& y_k = C_{\mathcal{K}} z_k, \\
+& u_{\min} \le u_k \le u_{\max}, \\
+& y_{\min} \le y_k \le y_{\max}, \\
+& z_0 = \hat{z}_0 ,
+\end{aligned}
+\label{eq:koopman_mpc_optimization}
+\end{equation}
+$\hat{z}_0 \in \mathbb{R}^{n_z}$ denotes the estimated lifted state vector at the current sampling instant, 
+obtained from the Kalman filter and used as the initial condition for the MPC prediction.
+
+In closed-loop operation, the Koopman MPC controller proceeds as follows.
+At each sampling instant, the outlet temperature of the heat exchanger is measured and scaled.
+This measurement, together with the previously applied control input, is used by the Kalman filter described in Section~\ref{sec:KF} to estimate the lifted state vector $\hat{z}_k$.
+The estimated state $\hat{z}_k$ is then used as the initial condition of the MPC prediction model.
+
+The optimization problem is solved over the finite horizon, but only the first control input is applied to the plant.
+At the next sampling instant, the procedure is repeated using updated measurements and state estimates.
+
+
+\begin{figure}[htbp]
+    \centering
+    \def\svgwidth{0.75\textwidth}
+    \input{svg-inkscape/SecDIag.drawio_svg-tex.pdf_tex}
+    \caption{Simplified block diagram of the Koopman-based MPC control structure.}
+    \label{fig:koopman_mpc_structure}
+  \end{figure}
+  
+
+Figure~\ref{fig:koopman_mpc_structure} illustrates the closed-loop structure, where the Kalman filter provides an estimate of the lifted state $\hat{z}_k$ from measured outputs, and the MPC controller computes the control input based on this estimate.
+
