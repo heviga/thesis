@@ -258,157 +258,104 @@ By keeping the MPC formulation and tuning parameters consistent across
 both controllers, any observed differences in control performance can be
 attributed primarily to the quality of the underlying prediction model
 rather than to differences in controller design.
+
 \section{Simulation Results}
 \label{sec:simulation_results}
 
-Closed-loop simulations were used to compare the Koopman-based MPC and the Strejc-based MPC under the same constraints and tuning described in Section~\ref{sec:mpc_design}. The simulations were run for $300$~s with the baseline nonlinear model used as the plant. The controllers were tested from several initial outlet temperatures $T_0 \in \{45,50,55,58,60,62,66,68\}\,^{\circ}\mathrm{C}$.
+Closed-loop simulations were performed to compare the Koopman-based MPC and the MPC based on a linear model identified from the step response under the same constraints and tuning described in Section~\ref{sec:mpc_design}. The simulations were carried out over a horizon of $150$ time steps, and both controllers were tested from several initial outlet temperatures
+\[
+T_0 \in \{45,50,55,58,60,62,66,68\}\,^{\circ}\mathrm{C}.
+\]
 
-The plant used in the closed-loop simulations is a data-driven nonlinear model identified using a Koopman-based lifting approach. The model was trained in Python using the NeuroMANCER framework and subsequently used as the baseline nonlinear plant in MATLAB closed-loop simulations.
+As a simulation plant, a nonlinear data-driven baseline model was used. This model was identified in Python using the NeuroMANCER framework and represents the outlet temperature dynamics in a lifted latent space. In contrast to the simplified linear model used for comparison, the baseline model combines neural-network-based lifting and reconstruction with linear latent-state evolution, which allows it to capture nonlinear input--output behavior more accurately.
 
-The core idea of the model is to approximate the nonlinear input–output dynamics by lifting the measured output into a higher-dimensional latent space, where the evolution is described by a linear dynamical system. The model structure consists of four main components:
-
+The baseline model consists of four main components:
 \begin{itemize}
-\item an encoder neural network mapping the measured outlet temperature $y$ to a latent state $x \in \mathbb{R}^{240}$,
-\item a linear Koopman operator $K$ describing the latent state evolution,
-\item a linear input lifting matrix $B$ mapping the control input to the latent space,
-\item a decoder neural network reconstructing the physical output from the latent state.
+    \item an encoder neural network mapping the measured outlet temperature $y$ into a latent state $x \in \mathbb{R}^{24}$,
+    \item a linear latent-state transition operator $K$,
+    \item a linear input lifting map $B$,
+    \item a decoder neural network reconstructing the physical output from the latent state.
 \end{itemize}
 
 The latent dynamics are described by the discrete-time model
 \begin{equation}
-x_{k+1} = K x_k + B u_k,
+x_{k+1} = Kx_k + Bu_k,
 \end{equation}
-where $x_k$ is the lifted state and $u_k$ is the control input.
-The physical output is reconstructed as
+where $x_k$ denotes the lifted latent state and $u_k$ is the control input. The physical output is reconstructed as
 \begin{equation}
 y_k = f_{\mathrm{dec}}(x_k),
 \end{equation}
-where $f_{\mathrm{dec}}(\cdot)$ denotes the decoder neural network.
+where $f_{\mathrm{dec}}(\cdot)$ denotes the decoder network.
 
-The encoder and decoder are implemented as multi-layer perceptrons (MLPs) with ReLU and ELU nonlinearities, respectively, while the Koopman operator $K$ and the input matrix $B$ are linear layers without bias. The latent dimension was chosen as $n_x = 240$.
+For comparison, the second controller was constructed using a linear model identified from the step response. This model provides a simplified linear approximation of the process dynamics around the operating region and is used as the prediction model inside the corresponding MPC controller.
 
+It should be emphasized that these closed-loop simulations are used primarily to verify that both predictive controllers are able to steer the simulated plant to the desired steady-state operating region in a stable and consistent manner. Therefore, the simulation study serves mainly as a comparative validation of controller behavior on a common baseline model and is not intended to exactly reproduce the behavior of the real experimental device.
 
-As an example, Figure~\ref{fig:cl_response} shows the closed-loop response for the initial temperature $T_0 = 62\,^{\circ}\mathrm{C}$. Both controllers regulate the outlet temperature to the operating point around $59\,^{\circ}\mathrm{C}$ with negligible steady-state error, which is slightly lower for the Koopman MPC. During the transient phase, the Koopman MPC remains closer to the reference, resulting in a lower RMSE of $0.866\,^{\circ}\mathrm{C}$ compared to $1.010\,^{\circ}\mathrm{C}$ for the Strejc MPC (Table~\ref{tab:performance_metrics}). This difference is mainly caused by a more aggressive initial reduction of the control input, leading to faster convergence.
-
-
-% \begin{figure}[!t]
-% \centering
-% % replace filename with the new one (e.g. cl_compare_T0_62.png)
-% \includegraphics[width=0.95\textwidth]{images/cl_compare_T0_62.png}
-% \caption{Closed-loop response and control input comparison for Koopman MPC and Strejc MPC (start $T_0 = 62\,^{\circ}\mathrm{C}$).}
-% \label{fig:cl_response}
-% \end{figure}
+A representative example is shown in Figure~\ref{fig:cl_response45} for the initial temperature $T_0 = 45\,^{\circ}\mathrm{C}$, i.e., for an initial condition significantly below the steady-state operating region. In this case both controllers first apply a strong control action close to the actuator limit and then gradually reduce the input as the output approaches steady state. The responses confirm that both MPC formulations are able to steer the system from a large initial deviation toward the desired operating region. This case is used mainly to illustrate the stabilizing behavior of the controllers and to confirm that the designed MPC schemes regulate the simulated plant to steady state even for more demanding initial conditions.
 
 \begin{figure}[!t]
     \centering
-    % replace filename with the new one (e.g. cl_compare_T0_62.png)
-    \includegraphics[width=0.95\textwidth]{images/Figure_04_62.png}
-    \caption{Closed-loop response and control input comparison for Koopman MPC and Strejc MPC (start $T_0 = 62\,^{\circ}\mathrm{C}$).}
-    \label{fig:cl_response}
+    \includegraphics[width=0.95\textwidth]{images/IC_01_y0_45_00.png}
+    \caption{Closed-loop response and control input comparison for Koopman MPC and MPC based on the linear model identified from step response for the initial condition $T_0 = 45\,^{\circ}\mathrm{C}$. This case illustrates that both controllers regulate the simulated plant to the steady-state operating region also from a large initial deviation.}
+    \label{fig:cl_response45}
 \end{figure}
 
-
-\begin{figure}[!t]
-    \centering
-    % replace filename with the new one (e.g. cl_compare_T0_62.png)
-    \includegraphics[width=0.95\textwidth]{images/Figure_07_55.png}
-    \caption{Closed-loop response and control input comparison for Koopman MPC and Strejc MPC (start $T_0 = 55\,^{\circ}\mathrm{C}$).}
-    \label{fig:cl_response2}
-\end{figure}
-
-For performance evaluation, three metrics were considered: the root mean square error (RMSE), the integral of absolute error (IAE), and the quadratic objective value, evaluated consistently with the normalized MPC formulation. The IAE is defined as
+To evaluate the closed-loop performance, three metrics were considered: the root mean square error (RMSE), the integral of absolute error (IAE), and the closed-loop quadratic objective value. The IAE is defined as
 \begin{equation}
 \mathrm{IAE} = \sum_{k=1}^{N} \left| y(k) - y_{\mathrm{ref}} \right|,
 \end{equation}
-where $y(k)$ denotes the outlet temperature at time step $k$, $y_{\mathrm{ref}}$ is the steady-state operating point, and $N$ is the length of the simulation horizon.
- For $T_0 = 62\,^{\circ}\mathrm{C}$, the Koopman MPC reaches $\mathrm{IAE}=99.6$, while the Strejc MPC reaches $\mathrm{IAE}=123.7$. The corresponding objective values are $43.12$ (Koopman) and $48.48$ (Strejc).
+where $y(k)$ denotes the outlet temperature at time step $k$, $y_{\mathrm{ref}}$ is the reference operating point, and $N$ is the simulation horizon.
 
-Table~\ref{tab:performance_metrics} summarizes the results for all tested initial temperatures. Close to the operating point (e.g. $T_0 = 58$--$62\,^{\circ}\mathrm{C}$), both controllers keep the tracking error small. When starting further away (e.g. $T_0 = 45\,^{\circ}\mathrm{C}$ or $T_0 = 68\,^{\circ}\mathrm{C}$), the errors increase for both, which is visible mainly in the larger IAE and RMSE values. Overall, the mean RMSE over all tested initial conditions is $2.042\,^{\circ}\mathrm{C}$ for the Koopman MPC and $2.133\,^{\circ}\mathrm{C}$ for the Strejc MPC, with mean IAE values $216.0$ and $231.5$, respectively.
+For the initial condition $T_0 = 45\,^{\circ}\mathrm{C}$, the Koopman MPC achieved $\mathrm{RMSE}=4.58\,^{\circ}\mathrm{C}$, $\mathrm{IAE}=358.28$, and $J_{\mathrm{CL}}=563.53$, whereas the MPC based on the linear model identified from the step response achieved $\mathrm{RMSE}=4.62\,^{\circ}\mathrm{C}$, $\mathrm{IAE}=380.57$, and $J_{\mathrm{CL}}=562.36$. Although the quadratic objective values are almost identical in this case, the Koopman MPC yields slightly smaller tracking errors in both RMSE and IAE.
 
+Table~\ref{tab:performance_metrics} summarizes the results for all tested initial temperatures. For initial conditions close to the operating point, both controllers achieve very small tracking errors. As the initial temperature moves further away from the reference, both RMSE and IAE increase, which is expected due to larger transient deviations and stronger control action requirements.
 
+\begin{table}[!t]
+    \centering
+    \caption{Performance metrics for Koopman MPC and MPC based on a linear model identified from step response, evaluated for different initial temperatures.}
+    \label{tab:performance_metrics}
+    \begin{tabular}{c|ccc|ccc}
+    \hline
+    \multirow{2}{*}{$T_0$ [$^\circ$C]} &
+    \multicolumn{3}{c|}{Koopman MPC} &
+    \multicolumn{3}{c}{Linear step-response model MPC} \\
+     & RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ &
+     RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ \\
+    \hline
+    45 & 4.58 & 358.28 & 563.53 & 4.62 & 380.57 & 562.36 \\
+    50 & 2.93 & 209.77 & 259.79 & 2.98 & 231.62 & 257.93 \\
+    55 & 1.49 & 97.24  & 82.05  & 1.54 & 114.97 & 79.22  \\
+    58 & 0.64 & 40.95  & 15.78  & 0.67 & 48.89  & 15.32  \\
+    60 & 0.32 & 20.40  & 3.80   & 0.33 & 24.08  & 3.76   \\
+    62 & 0.23 & 8.78   & 1.71   & 0.24 & 10.45  & 1.90   \\
+    66 & 0.99 & 70.94  & 36.89  & 1.10 & 86.72  & 39.44  \\
+    68 & 1.53 & 119.82 & 87.43  & 1.70 & 145.97 & 94.37  \\
+    \hline
+    \textbf{Mean} &
+    \textbf{1.59} & \textbf{115.77} & \textbf{131.37} &
+    \textbf{1.65} & \textbf{130.41} & \textbf{131.79} \\
+    \hline
+    \end{tabular}
+\end{table}
 
+The three performance metrics exhibit very similar trends for both controllers. The RMSE and IAE values are smallest for initial temperatures near the operating point and increase for larger deviations from steady state. The objective function follows the same qualitative pattern.
 
-% \begin{table}[!t]
-%     \centering
-%     \caption{Performance metrics for Koopman MPC and Strejc MPC evaluated for different initial temperatures.}
-%     \label{tab:performance_metrics}
-%     \begin{tabular}{c|ccc|ccc}
-%     \hline
-%     \multirow{2}{*}{$T_0$ [$^\circ$C]} &
-%     \multicolumn{3}{c|}{Koopman MPC} &
-%     \multicolumn{3}{c}{Strejc MPC} \\
-%      & RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ &
-%      RMSE [$^\circ$C] & IAE &  $J_{\mathrm{CL}}$ \\
-%     \hline
-%     45 & 3.606 & 308.5 & 514.84 & 3.670 & 324.3 & 516.58 \\
-%     50 & 1.680 & 133.5 & 134.31 & 1.746 & 145.4 & 131.55 \\
-%     55 & 1.022 & 93.1  & 59.50  & 1.083 & 102.6 & 55.92  \\
-%     58 & 0.356 & 50.5  & 7.31   & 0.419 & 59.2  & 8.32   \\
-%     60 & 0.466 & 66.4  & 12.69  & 0.559 & 81.5  & 14.84  \\
-%     \rowcolor{gray!15}
-%     62 & 0.866 & 99.6  & 43.12  & 1.010 & 123.7 & 48.48  \\
-%     66 & 2.898 & 309.3 & 305.76 & 2.871 & 322.3 & 348.46 \\
-%     68 & 5.446 & 667.1 & 1008.51& 5.709 & 692.9 & 1205.30\\
-%     \hline
-%     \textbf{Mean} &
-%     \textbf{2.042} & \textbf{216.0} & \textbf{260.76} &
-%     \textbf{2.133} & \textbf{231.5} & \textbf{291.18} \\
-%     \textbf{Sum}  &
-%     \textbf{16.34} & \textbf{1727.9} & \textbf{2086.04} &
-%     \textbf{17.07} & \textbf{1852.0} & \textbf{2329.45} \\
-%     \hline
-%     \end{tabular}
-%     \end{table}
-    
-    \begin{table}[!t]
-        \centering
-        \caption{Performance metrics for Koopman MPC and Strejc MPC evaluated for different initial temperatures.}
-        \label{tab:performance_metrics}
-        \begin{tabular}{c|ccc|ccc}
-        \hline
-        \multirow{2}{*}{$T_0$ [$^\circ$C]} &
-        \multicolumn{3}{c|}{Koopman MPC} &
-        \multicolumn{3}{c}{Strejc MPC} \\
-         & RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ &
-         RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ \\
-        \hline
-        45 & 2.530 & 282.8 & 519.36 & 2.548 & 300.2 & 516.66 \\
-        50 & 1.151 & 99.6  & 139.36 & 1.180 & 116.7 & 135.51 \\
-        55 & 0.639 & 54.7  & 64.20  & 0.676 & 71.0  & 59.86  \\
-        58 & 0.128 & 12.9  & 20.72  & 0.123 & 21.7  & 10.43  \\
-        60 & 0.287 & 26.2  & 34.58  & 0.183 & 31.4  & 16.38  \\
-        \rowcolor{gray!15}
-        62 & 0.498 & 48.2  & 59.12  & 0.456 & 61.2  & 44.25  \\
-        66 & 1.766 & 223.0 & 284.43 & 1.780 & 262.5 & 336.85 \\
-        68 & 4.056 & 699.8 & 1208.60& 3.182 & 525.5 & 882.26 \\
-        \hline
-        \textbf{Mean} &
-        \textbf{1.382} & \textbf{180.3} & \textbf{291.80} &
-        \textbf{1.266} & \textbf{173.8} & \textbf{250.27} \\
-        \textbf{Sum} &
-        \textbf{11.06} & \textbf{1447.1} & \textbf{2334.39} &
-        \textbf{10.13} & \textbf{1390.2} & \textbf{2002.18} \\
-        \hline
-        \end{tabular}
-    \end{table}
+The results do not indicate a strong dominance of one controller over the other across all operating conditions. However, the Koopman MPC achieves slightly lower RMSE for all tested initial temperatures and also lower IAE in every tested case. This suggests that the Koopman-based prediction model provides a slightly better overall tracking quality on the considered simulation plant, even though the differences remain relatively small.
+
+When averaged over all tested initial conditions, the mean RMSE is $1.59\,^{\circ}\mathrm{C}$ for the Koopman MPC and $1.65\,^{\circ}\mathrm{C}$ for the linear-model-based MPC. The mean IAE values are $115.77$ and $130.41$, respectively. The mean closed-loop objective values are $131.37$ and $131.79$, which are nearly identical.
+
+Overall, both controllers provide very similar closed-loop performance and both reliably regulate the simulated nonlinear baseline plant to the steady-state operating region. Within this simulation study, the Koopman MPC achieves slightly lower average tracking error, both in terms of RMSE and IAE, while the closed-loop objective remains practically the same for both approaches.
+
+All three performance metrics are summarized in Figure~\ref{fig:sim_metrics_summary}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/Summary_metrics.png}
+    \caption{Closed-loop performance metrics versus initial temperature $T_0$ for Koopman MPC and MPC based on the linear model identified from step response: IAE, RMSE, and the closed-loop objective value $J_{\mathrm{CL}}$.}
+    \label{fig:sim_metrics_summary}
+\end{figure}
 
 
-    The quadratic objective function exhibits a comparable trend to the error-based metrics. However, unlike the previous results, neither controller consistently outperforms the other across all initial conditions. For lower and moderate initial temperatures, the objective values are relatively close, with slight differences depending on the specific operating point.
-
-    For higher initial temperatures (e.g., $T_0 = 68,^{\circ}\mathrm{C}$), the Strejc MPC achieves a significantly lower objective value compared to the Koopman MPC. This indicates a more favorable trade-off between tracking performance and control effort in these scenarios. In particular, the reduced objective value for the Strejc controller suggests smoother control actions with lower penalized input activity, even when the tracking error remains comparable.
-    
-    When averaged over all tested initial conditions, the mean RMSE of the Koopman MPC is $1.38,^{\circ}\mathrm{C}$, while the Strejc MPC achieves a slightly lower value of $1.27,^{\circ}\mathrm{C}$. Similarly, the mean IAE is $180.3$ for the Koopman MPC and $173.8$ for the Strejc MPC. The mean closed-loop objective values are $291.80$ and $250.27$, respectively, again favoring the Strejc MPC in terms of overall cost.
-    
-    Overall, the results indicate that both controllers provide comparable closed-loop performance, with the Strejc MPC showing a slight advantage in the averaged performance metrics under the considered tuning and operating conditions.
-    
-    All three performance metrics are visualized in Figure~\ref{fig:sim_metrics_summary}.
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=\textwidth]{images/Figure_01_metrics.png}
-        \caption{Closed-loop performance metrics versus initial temperature $T_0$ for Koopman MPC and Strejc MPC:
-        tracking RMSE, IAE, and the closed-loop objective value $J_{\mathrm{CL}}$.}
-        \label{fig:sim_metrics_summary}
-    \end{figure}
 
 
     \section{Experimental Results}
