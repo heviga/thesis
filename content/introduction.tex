@@ -18,7 +18,14 @@ Classical linear models remain widely used in industrial practice because of the
 Strejc-type models are particularly common SISO heat exchanger configurations, where the control objective is to regulate the outlet temperature using a single manipulated variable. These models are frequently employed for controller design, tuning, and performance analysis in industrial thermal processes \cite{mpc_heat_exchanger}.
 
 
-Although such models perform well near a nominal operating point, their accuracy decreases in the presence of nonlinear effects, which motivates the use of more advanced modeling approaches for predictive control \cite{morari1999}. These limitations of linear modeling have led to increased research interest in data-driven and nonlinear modeling techniques. Among these approaches, the Koopman operator framework provides a theoretical foundation for representing nonlinear dynamical systems through linear operators acting on lifted state spaces. The concept was originally introduced by Koopman in \cite{koopman1931}. Later Mezi\'c contributed by demonstrating how Koopman framework can be practically applied to analyze nonlinear system behavior \cite{mezic2005}.
+Although such models perform well near a nominal operating point, their accuracy decreases in the presence of nonlinear effects, which motivates the use of more advanced modeling approaches for predictive control \cite{morari1999}. These limitations of linear modeling have led to increased research interest in data-driven and nonlinear modeling techniques.
+
+Data-driven modeling represents an alternative approach to classical first-principles and step-response-based modeling. 
+Instead of deriving models from physical laws or simplified assumptions, data-driven methods construct system representations directly from measured input--output data. 
+This allows complex and nonlinear system behavior to be captured more accurately, especially in cases where physical modeling is difficult or where the system operates over a wide range of conditions. 
+\cite{ljung_sysid}.
+
+Among these approaches, the Koopman operator framework provides a theoretical foundation for representing nonlinear dynamical systems through linear operators acting on lifted state spaces. The concept was originally introduced by Koopman in \cite{koopman1931}. Later Mezi\'c contributed by demonstrating how Koopman framework can be practically applied to analyze nonlinear system behavior \cite{mezic2005}.
 
 A key element of the Koopman framework is the lifting function 
 $g(\cdot)$, which maps the original system states or measurements into a higher-dimensional space. In this lifted space, nonlinear system dynamics can be represented using a linear prediction model. The choice or construction of the lifting function therefore plays a significant role in the accuracy of the resulting Koopman model.

@@ -42,7 +42,7 @@ The measured output used for identification was the temperature at the outlet of
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{images/fig_raw_measurementsSplit.png}
+    \includegraphics[width=\textwidth]{images/raw_identification_measurements.png}
     \caption{Measured input signal (Pump~F speed) and measured outlet temperature $T_4$ used for system identification.}
     \label{fig:raw_measurements}
 \end{figure}
@@ -101,7 +101,7 @@ The identified linear model is subsequently used as the prediction model in the 
 
 To evaluate the predictive capability of the model, an open-loop simulation was performed using the testing dataset. In this setting, the measured input signal was applied directly to the model, while the output was not corrected using measurements. The resulting trajectory therefore represents a pure model prediction driven only by the input signal and the initial condition.
 
-The model parameters were identified using the complete dataset. For validation, the data were split, and the second part of the experiment, starting at $t = 2000~\mathrm{s}$, was used for open-loop testing.
+The model parameters were identified using the complete dataset. For validation, the data were split, and the second part of the experiment, starting at $t = 2250~\mathrm{s}$, was used for open-loop testing.
 
 The predicted output $\hat{y}_k$ was compared with the measured outlet temperature $y_k = T_4$, and the prediction error was quantified using the root mean square error (RMSE),
 \begin{equation}
@@ -112,7 +112,7 @@ where $N$ denotes the number of samples in the testing dataset. The RMSE was com
 
 For the identified linear model, the overall open-loop RMSE obtained on the test data was
 \[
-\mathrm{RMSE}_{\mathrm{OL}} = 2.124\,^{\circ}\mathrm{C}.
+\mathrm{RMSE}_{\mathrm{OL}} = 1.6962\,^{\circ}\mathrm{C}.
 \]
 
 This value provides a direct measure of model accuracy, as it reflects how well the model predicts the process output without feedback. The results indicate that the model captures the dominant thermal dynamics of the heat exchanger, while prediction errors gradually accumulate due to nonlinear effects and unmodeled disturbances.
@@ -124,36 +124,67 @@ Although the model is sufficient for basic control design, these limitations mot
 
 This subsection summarizes how the Koopman prediction model used later for control was obtained. While Section~\ref{sec:Koopman_operator} presents the general Koopman framework, here we focus on the specific model structure, training setup, and how the final state-space matrices were extracted.
 
-The identification was implemented in the \texttt{Neuromancer} framework~\cite{neuromancer2022}. Before training, the measured output and input signals were standardized using precomputed \texttt{StandardScaler} objects (mean and standard deviation), mainly to improve numerical conditioning.
+The identification was implemented in the \texttt{Neuromancer} framework~\cite{neuromancer2022}. Before training, the measured output and input signals were standardized using precomputed \texttt{StandardScaler} objects (mean and standard deviation), mainly to improve numerical conditioning. The scaling parameters used in this work were
+\[
+\mu_y = 59.0676, \qquad \sigma_y = 6.9122,
+\]
+\[
+\mu_u = 65.8447, \qquad \sigma_u = 22.9062.
+\]
 
-We used an encoder--decoder architecture with control inputs. The measured outlet temperature $y_k$ was lifted to a latent state $z_k \in \mathbb{R}^{n_z}$ with $n_z=10$ using a fully connected multi-layer perceptron with three hidden layers $[60,\,60,\,60]$ and ReLU activations. The input $u_k$ was mapped to the same latent dimension by a linear layer without bias. The latent dynamics were represented by a linear operator, and the output was reconstructed by a linear decoder without bias. The Koopman matrices used later in MPC correspond directly to the learned network weights. The total number of trainable parameters was $8170$.
+
+
+We used an encoder--decoder architecture with control inputs. The measured outlet temperature $y_k$ was lifted to a latent state $z_k \in \mathbb{R}^{n_z}$ with $n_z=10$ using a fully connected multi-layer perceptron with three hidden layers $[60,\,60,\,60]$ and ReLU activations. The input $u_k$ was mapped to the same latent dimension by a linear layer without bias. The latent dynamics were represented by a linear operator of the form
+\[
+z_{k+1} = K z_k + B_{\mathcal K} u_k,
+\]
+where $K$ corresponds to a trainable linear layer and $B_{\mathcal K}$ is implicitly given by the input lifting layer. The output was reconstructed by a linear decoder without bias,
+\[
+\hat{y}_k = C_{\mathcal K} z_k.
+\]
+The Koopman matrices used later in MPC correspond directly to the learned network weights. The total number of trainable parameters was $8170$.
 
 Training was performed on segments of length $n_{\mathrm{steps}}=50$ using mini-batches of size $b_s=100$. We used the Adam optimizer with learning rate $10^{-3}$ and a fixed random seed. The maximum number of epochs was set to $900$, with early stopping monitored on the development loss (patience $200$) and a warmup period of $100$ epochs. Training took approximately $35$ minutes on a single GPU.
 
-Training minimized a weighted sum of loss terms that penalize prediction errors and keep the latent representation consistent. The objective was to achieve optimal multi-step predictions, one-step behavior, and encoder--decoder mapping. The corresponding mean squared errors were approximately
+Training minimized a weighted sum of loss terms that penalize prediction errors and enforce consistency of the lifted representation. In contrast to the general formulation presented in Section~\ref{sec:Koopman_operator}, the practical implementation used the following weights:
+\begin{itemize}
+    \item multi-step output prediction loss weighted by $10$,
+    \item one-step prediction loss weighted by $1$,
+    \item reconstruction loss weighted by $20$,
+    \item latent consistency loss weighted by $1$.
+\end{itemize}
+
+These loss terms correspond to the objectives of accurate multi-step prediction, local one-step accuracy, encoder--decoder consistency, and linear evolution in the lifted space. The corresponding mean squared errors were approximately
 \[
 \mathrm{MSE}_{\text{train}} \approx 0.068, \qquad
 \mathrm{MSE}_{\text{val}} \approx 0.060.
 \]
 
+In this implementation, no explicit stability constraint on the Koopman operator was imposed, i.e., a standard linear layer was used instead of a constrained SVD parameterization.
+
 The identified Koopman model was then evaluated in open loop on the available test trajectory. The resulting open-loop error was
 \[
-\mathrm{RMSE}_{\mathrm{OL}}^{\mathrm{Koop}} = 2.315\,^{\circ}\mathrm{C}.
+\mathrm{RMSE}_{\mathrm{OL}}^{\mathrm{Koop}} = 1.6681\,^{\circ}\mathrm{C}.
 \]
 
-This value is slightly higher than the open-loop RMSE of the first-order linear model. The difference is mainly related to the open-loop evaluation setting. In the Koopman case, the system state is represented in a higher-dimensional lifted space and must be initialized from the measured output, which can influence the open-loop prediction.
+The results indicate that the Koopman model achieves a slightly lower prediction error compared to the first-order model. The difference is relatively small, which suggests that both models capture the dominant system dynamics, while the Koopman model provides a marginal improvement due to its ability to represent nonlinear effects.
 
-The identified matrices $A_{\mathcal K}$, $B_{\mathcal K}$, and $C_{\mathcal K}$ are used in the following sections for Koopman-based MPC design and experimental evaluation on the PCT23 system.
+The identified matrices $A_{\mathcal K}$, $B_{\mathcal K}$, and $C_{\mathcal K}$ were extracted directly from the trained model parameters as
+\[
+A_{\mathcal K} = K.\mathrm{weight}, \qquad
+B_{\mathcal K} = f_u.\mathrm{weight}, \qquad
+C_{\mathcal K} = f_y^{-1}.\mathrm{weight},
+\]
+with $D_{\mathcal K}=0$, and are used in the following sections for Koopman-based MPC design and experimental evaluation on the PCT23 system.
 
 For a direct visual comparison, Figure~\ref{fig:open_loop_compare} shows the measured test output together with the open-loop predictions of both identified models. The linear model follows the dominant trend of the measured response well, while the Koopman model provides a comparable prediction quality. The figure confirms that both models are suitable for subsequent controller design, although both accumulate prediction error over longer horizons.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{images/open_loop_comparison.png}
+    \includegraphics[width=\textwidth]{images/open_loop_model_comparison.png}
     \caption{Open-loop comparison of the measured outlet temperature $T_4$ and the predicted outputs of the linear step-response model and the Koopman model on the test dataset.}
     \label{fig:open_loop_compare}
 \end{figure}
-
 
 
 \section{MPC Controller Design}
@@ -323,108 +354,161 @@ All three performance metrics are summarized in Figure~\ref{fig:sim_metrics_summ
 
 
 
+\section{Experimental Results}
+\label{sec:experimental_results}
 
-    \section{Experimental Results}
-    \label{sec:experimental_results}
-    
-    Experimental validation was performed on the Armfield PCT23 heat exchanger described in Section~\ref{sec:practical_introduction}.
-    The goal was to verify the closed-loop behavior observed in simulations on the real device and to compare the Koopman-based MPC with the Strejc-based MPC under identical experimental conditions.
-    
-    The experiments were initialized at different outlet temperatures.
-    Before each MPC run we initiallized the starting temperatures using a PI controller acting on the pump speed.
+Experimental validation was performed on the Armfield PCT23 heat exchanger described in Section~\ref{sec:practical_introduction}.
+The goal was to verify the closed-loop behavior observed in simulations on the real device and to compare the Koopman-based MPC with the MPC based on a first-order linear model under identical experimental conditions.
 
-    
-    Regulation was performed to zero in normalized coordinates.
-    The corresponding reference temperature $x_{\text{target}}$ $= 63.808\,^{\circ}\mathrm{C}$ was computed from the measured steady-state mean obtained during the experimental day.
-    This value is consistent with the input mean $u_{\text{mean}}$ used during identification, but it does not correspond to the mean of the identification dataset itself.
-    The prediction horizon, cost function weights, constraints, and Kalman filter parameters were kept identical for both controllers, so that only the difference between the prediction models is compared.
-    
-    During the experiments, the outlet temperature $T_4$ was used as the feedback signal.
-    The heater loop and the pump in the secondary circuit were kept unchanged.
-    The only manipulated variable was the pump speed controlled by the MPC.
-    
-    \begin{figure}[!ht]
-        \centering
-        \includegraphics[width=0.95\textwidth]{images/compare_cl_T0_62.png}
-        \caption{Experimental closed-loop response and control input for the initial temperature $T_0 = 62\,^{\circ}\mathrm{C}$.}
-        \label{fig:cl_exp_T0_62}
-    \end{figure}
-    
-    Figure~\ref{fig:cl_exp_T0_62} shows the experimental closed-loop response for the case starting from
-    $T_0 = 62\,^{\circ}\mathrm{C}$.
-    Both controllers regulate the outlet temperature towards the operating point with a small steady-state offset.
-    
-    At the beginning of the experiment, the Koopman MPC applies a more aggressive control action.
-    For a short initial interval, the pump speed is driven close to its upper limit, which causes the outlet temperature to increase faster than in the Strejc case.
-    As a result, the Koopman MPC reaches a higher temperature earlier and remains closer to the reference during the transient.
-    After this initial phase, the control input is reduced and both controllers operate in a similar range.
-    
-    Over the full duration of the experiment, the Koopman MPC maintains smaller deviations from the reference.
-    For $T_0 = 62\,^{\circ}\mathrm{C}$, the RMSE is $0.597\,^{\circ}\mathrm{C}$ for the Koopman MPC compared to
-    $0.797\,^{\circ}\mathrm{C}$ for the Strejc MPC.
-    The corresponding IAE values are $159.4$ and $225.1$, respectively.
-    
-    \begin{figure}[!ht]
-        \centering
-        \includegraphics[width=\textwidth]{images/metrics_vs_T0_from55.png}
-        \caption{Experimental performance metrics (RMSE, IAE and objective value) evaluated for different initial outlet temperatures $T_0$.}
-        \label{fig:exp_metrics}
-    \end{figure}
-    
-    Figure~\ref{fig:exp_metrics} summarizes the experimental performance metrics for all tested initial conditions.
-    The RMSE decreases as the initial temperature approaches the operating point and reaches its minimum in the interval
-    $T_0 = 60$--$66\,^{\circ}\mathrm{C}$ for both controllers.
-    In this region, the Koopman MPC consistently achieves lower RMSE values.
-    For example, at $T_0 = 60\,^{\circ}\mathrm{C}$ the RMSE is $0.693\,^{\circ}\mathrm{C}$ for the Koopman MPC and
-    $0.723\,^{\circ}\mathrm{C}$ for the Strejc MPC.
-    
-    The IAE shows a similar dependence on the initial condition.
-    The lowest IAE values are obtained close to the operating point and increase as the initial temperature moves further away.
-    Across all tested cases, the Koopman MPC yields lower IAE values, indicating smaller accumulated tracking error.
-    At $T_0 = 55\,^{\circ}\mathrm{C}$, the IAE is $272.5$ for the Koopman MPC and $296.9$ for the Strejc MPC, while at
-    $T_0 = 68\,^{\circ}\mathrm{C}$ the values increase to $203.8$ and $248.8$, respectively.
-    
-    Table~\ref{tab:performance_metrics_exp} summarizes the performance metrics for all tested initial temperatures.
+The experiments were initialized at different outlet temperatures.
+Before each MPC run, the desired starting temperature was achieved using a PI controller acting on the pump speed.
 
-    \begin{table}[!t]
-        \centering
-        \caption{Performance metrics for Koopman MPC and Strejc MPC obtained from experiments for different initial temperatures.}
-        \label{tab:performance_metrics_exp}
-        \begin{tabular}{c|ccc|ccc}
-        \hline
-        \multirow{2}{*}{$T_0$ [$^\circ$C]} &
-        \multicolumn{3}{c|}{Koopman MPC} &
-        \multicolumn{3}{c}{Strejc MPC} \\
-        & RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ &
-          RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ \\
-        \hline
-        55 & 2.004  & 272.46 & 365.86 & 1.872 & 296.91 & 316.18 \\
-        58 & 1.259  & 172.00 & 185.07 & 1.471 & 256.00 & 225.12 \\
-        60 & 0.693  & 128.34 & 74.84  & 0.723 & 147.94 & 59.08  \\
-        \rowcolor{gray!15}
-        62 & 0.597  & 159.42 & 73.19  & 0.797 & 225.07 & 74.61  \\
-        66 & 0.594  & 134.62 & 64.63  & 0.690 & 182.05 & 64.86  \\
-        68 & 0.922  & 203.83 & 141.72 & 1.009 & 248.83 & 143.66 \\
-        \hline
-        \textbf{Mean} &
-        \textbf{1.011} & \textbf{178.45} & \textbf{150.88} &
-        \textbf{1.094} & \textbf{226.13} & \textbf{147.25} \\
-        \textbf{Sum}  &
-        \textbf{6.068} & \textbf{1070.67} & \textbf{905.31} &
-        \textbf{6.563} & \textbf{1356.80} & \textbf{883.50} \\
-        \hline
-        \end{tabular}
-        \end{table}
-        
+Regulation was performed to zero in normalized coordinates.
+The corresponding reference temperature $x_{\text{target}} = 63.808,^{\circ}\mathrm{C}$ was computed from the measured steady-state mean obtained during the experimental day.
+This value is consistent with the input mean $u_{\text{mean}}$ used during identification, but it does not correspond to the mean of the identification dataset itself.
+The prediction horizon, cost function weights, constraints, and Kalman filter parameters were kept identical for both controllers, so that only the difference between the prediction models is compared.
 
-    The objective function values are very similar for both controllers.
-    In most cases, the Strejc MPC gives a slightly lower objective value, which can be explained by smoother control actions and smaller changes of the input.
-    The Koopman MPC uses more aggressive input moves, mainly at the beginning of the run, which leads to faster regulation but also increases the contribution of the input term in the objective function.
-    
-    
-    The differences between the Koopman MPC and the Strejc MPC follow the same trend as in simulation and the steady-state behavior of both controllers is similar.
-    Biggest differences are visible at the beginning of the response. For the Koopman MPC, the first control move is sometimes estimated more aggressively, leading to a larger initial input change.
-    
+During the experiments, the outlet temperature $T_4$ was used as the feedback signal.
+The heater loop and the pump in the secondary circuit were kept unchanged.
+The only manipulated variable was the pump speed controlled by the MPC.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.95\textwidth]{images/compare_cl_T0_62.png}
+\caption{Experimental closed-loop response and control input for the initial temperature $T_0 = 62,^{\circ}\mathrm{C}$.}
+\label{fig:cl_exp_T0_62}
+\end{figure}
+
+Figure~\ref{fig:cl_exp_T0_62} shows the experimental closed-loop response for the case starting from
+$T_0 = 62,^{\circ}\mathrm{C}$.
+Both controllers regulate the outlet temperature towards the operating point with a small steady-state offset.
+
+At the beginning of the experiment, the Koopman MPC applies a more aggressive control action.
+For a short initial interval, the pump speed is driven close to its upper limit, which causes the outlet temperature to increase faster than in the linear MPC case.
+As a result, the Koopman MPC reaches a higher temperature earlier and remains closer to the reference during the transient.
+After this initial phase, the control input is reduced and both controllers operate in a similar range.
+
+Over the full duration of the experiment, the Koopman MPC maintains smaller deviations from the reference.
+For $T_0 = 62,^{\circ}\mathrm{C}$, the RMSE is $0.597,^{\circ}\mathrm{C}$ for the Koopman MPC compared to
+$0.797,^{\circ}\mathrm{C}$ for the linear MPC.
+The corresponding IAE values are $159.4$ and $225.1$, respectively.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\textwidth]{images/metrics_vs_T0_from55.png}
+\caption{Experimental performance metrics (RMSE, IAE and objective value) evaluated for different initial outlet temperatures $T_0$.}
+\label{fig:exp_metrics}
+\end{figure}
+
+Figure~\ref{fig:exp_metrics} summarizes the experimental performance metrics for all tested initial conditions.
+The RMSE decreases as the initial temperature approaches the operating point and reaches its minimum in the interval
+$T_0 = 60$--$66,^{\circ}\mathrm{C}$ for both controllers.
+In this region, the Koopman MPC consistently achieves lower RMSE values.
+For example, at $T_0 = 60,^{\circ}\mathrm{C}$ the RMSE is $0.693,^{\circ}\mathrm{C}$ for the Koopman MPC and
+$0.723,^{\circ}\mathrm{C}$ for the linear MPC.
+
+The IAE shows a similar dependence on the initial condition.
+The lowest IAE values are obtained close to the operating point and increase as the initial temperature moves further away.
+Across all tested cases, the Koopman MPC yields lower IAE values, indicating smaller accumulated tracking error.
+At $T_0 = 55,^{\circ}\mathrm{C}$, the IAE is $272.5$ for the Koopman MPC and $296.9$ for the linear MPC, while at
+$T_0 = 68,^{\circ}\mathrm{C}$ the values increase to $203.8$ and $248.8$, respectively.
+
+Table~\ref{tab:performance_metrics_exp} summarizes the performance metrics for all tested initial temperatures.
+
+\begin{table}[!t]
+\centering
+\caption{Performance metrics for Koopman MPC and linear MPC obtained from experiments for different initial temperatures.}
+\label{tab:performance_metrics_exp}
+\begin{tabular}{c|ccc|ccc}
+\hline
+\multirow{2}{*}{$T_0$ [$^\circ$C]} &
+\multicolumn{3}{c|}{Koopman MPC} &
+\multicolumn{3}{c}{Linear MPC} \\
+& RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ &
+RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ \\
+\hline
+55 & 2.004  & 272.46 & 365.86 & 1.872 & 296.91 & 316.18 \\
+58 & 1.259  & 172.00 & 185.07 & 1.471 & 256.00 & 225.12 \\
+60 & 0.693  & 128.34 & 74.84  & 0.723 & 147.94 & 59.08  \\
+\rowcolor{gray!15}
+62 & 0.597  & 159.42 & 73.19  & 0.797 & 225.07 & 74.61  \\
+66 & 0.594  & 134.62 & 64.63  & 0.690 & 182.05 & 64.86  \\
+68 & 0.922  & 203.83 & 141.72 & 1.009 & 248.83 & 143.66 \\
+\hline
+\textbf{Mean} &
+\textbf{1.011} & \textbf{178.45} & \textbf{150.88} &
+\textbf{1.094} & \textbf{226.13} & \textbf{147.25} \\
+\textbf{Sum}  &
+\textbf{6.068} & \textbf{1070.67} & \textbf{905.31} &
+\textbf{6.563} & \textbf{1356.80} & \textbf{883.50} \\
+\hline
+\end{tabular}
+\end{table}
+
+The objective function values are very similar for both controllers.
+In most cases, the linear MPC gives a slightly lower objective value, which can be explained by smoother control actions and smaller changes of the input.
+The Koopman MPC uses more aggressive input moves, mainly at the beginning of the run, which leads to faster regulation but also increases the contribution of the input term in the objective function.
+
+The differences between the Koopman MPC and the linear MPC follow the same trend as in simulation and the steady-state behavior of both controllers is similar.
+The most significant differences are observed at the beginning of the response. For the Koopman MPC, the first control move is sometimes more aggressive, leading to a larger initial input change.
+
+
+
+\subsection{Transient Performance Evaluation}
+\label{sec:transient_evaluation}
+
+Many of the measured step responses reach a steady-state region before the full 300 s window. Therefore, we also focused on the transient phase of the response, which captures the dynamic behavior immediately after a change in operating conditions.
+
+The transient phase was defined using a settling-based criterion. The settling time was determined as the first time instant when the output enters a predefined band around the steady-state and remains within this band for at least $N_{\text{hold}} = 5$ consecutive samples. The settling band was selected based on the noise level observed in the identification data. The standard deviation of the measured output in locally steady-state regions was approximately $\sigma \approx 0.2^\circ$C, which resulted in a settling band of approximately $\pm 2\sigma \approx \pm 0.4^\circ$C.
+
+For each experiment, the transient interval was defined from the initial condition until the detected settling time. The following performance metrics were evaluated over this interval:
+\begin{itemize}
+\item Root Mean Square Error (RMSE),
+\item Integral of Absolute Error (IAE),
+\item Integral of Squared Error (ISE),
+\item Integral of Time-weighted Absolute Error (ITAE),
+\item Control energy $\sum u_k^2$.
+\end{itemize}
+
+An example of the experimental closed-loop response is shown in Figure~\ref{fig:cl_exp_T0_60} for the initial temperature $T_0 = 60,^{\circ}\mathrm{C}$. The figure also indicates the detected settling instant for both controllers (vertical lines), which defines the end of the transient phase used in the evaluation.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\textwidth]{images/compare_cl_T0_60.png}
+\caption{Closed-loop response and control input for $T_0 = 60,^{\circ}\mathrm{C}$ with indicated settling time.}
+\label{fig:cl_exp_T0_60}
+\end{figure}
+
+From the output it can be seen that both controllers stabilize the temperature around the reference without oscillations. The shape of the response corresponds to real thermal behavior, where the temperature reacts gradually due to the inertia of the system.
+
+At the beginning of the experiment, the Koopman MPC keeps the control input at the upper limit for a slightly longer time than the linear MPC. Despite this, the temperature does not increase faster and remains slightly lower than in previous experiments with the linear MPC. This reflects the real behavior of the system, where the same input does not always lead to the same temperature response.
+
+At the same time, both controllers adjust their control actions based on the measured output. When the temperature does not evolve as expected, the control input is adapted accordingly. This indicates that both approaches respond consistently to the observed process behavior.
+
+The evaluation was performed for six different initial temperatures in the range $55^\circ$C to $68^\circ$C. Instead of presenting individual results for each experiment, the metrics were aggregated across all initial conditions. The resulting sums and mean values are summarized in Table~\ref{tab:transient_summary}.
+
+\begin{table}[htbp]
+\centering
+\caption{Transient performance metrics.}
+\label{tab:transient_summary}
+\begin{tabular}{c c c c c c c}
+\hline
+Controller & Metric & $T_s$ & RMSE & IAE & ISE & ITAE \\
+\hline
+Koopman & Sum  & 322 & 12.31 & 567.52 & 2020.4 & 10652 \\
+Linear  & Sum  & 592 & 11.52 & 763.19 & 2110.2 & 41926 \\
+Koopman & Mean & 53.67 & 2.05 & 94.59 & 336.74 & 1775.4 \\
+Linear  & Mean & 98.67 & 1.92 & 127.20 & 351.69 & 6987.6 \\
+\hline
+\end{tabular}
+\end{table}
+
+It should be noted that the reported metrics are not normalized by the length of the transient horizon. As a result, the integral-based metrics (IAE, ISE, ITAE) are directly influenced by the duration of the transient phase. This is important when comparing the two controllers, since longer settling times naturally lead to larger accumulated error values.
+
+This effect was clearly visible for the initial condition $T_0 = 62^\circ$C, where the linear model required nearly $300$ samples to reach steady state, while the Koopman-based controller settled in only $12$ samples. Consequently, the accumulated metrics for the linear model become significantly larger, mainly due to the longer transient duration.
+
+Overall, both controllers achieve stable regulation of the outlet temperature across all tested initial conditions. The observed differences are primarily related to the transient behavior and the duration of the response, rather than fundamental differences in stability or feasibility of the control approach.
+
     
     \newpage
     \section*{Conclusions}
