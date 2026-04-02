@@ -115,11 +115,11 @@ The selection of the lifted state dimension represents a trade-off between model
 In the lifted space, the system dynamics can be approximated by a linear model of the form
 \begin{equation}
 z_{k+1} = A_{\mathcal{K}} z_k + B_{\mathcal{K}} u_k,
-\label{eq:koop_lifted_space}
+\label{eq:koopman_state}
 \end{equation}
 \begin{equation}
 \hat{y}_k = C_{\mathcal{K}} z_k.
-\label{eq:koop_decode}
+\label{eq:koopman_output}
 \end{equation}
 
 A commonly used method for approximating the Koopman operator from data is the Extended Dynamic Mode Decomposition (EDMD), which constructs a finite-dimensional approximation using a predefined set of basis functions. However, the performance of EDMD depends strongly on the choice of these basis functions.
