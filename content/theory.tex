@@ -9,13 +9,12 @@ Model Predictive Control (MPC) is then presented as the main control strategy us
 The chapter also introduces the Kalman filter (KF), which is used for state estimation in both the Strejc-based and Koopman-based control schemes. 
 Finally, the complete Koopman-based MPC structure is described, combining the Koopman prediction model, state estimation, and constrained optimal control into a single control framework.
 
-/;lk,mj
 
 \section{Koopman Operator}
 \label{sec:Koopman_operator}
 
-The Koopman operator framework provides a data-driven approach for modeling nonlinear dynamical systems using linear representations in an augmented state space. 
-Instead of directly modeling the nonlinear evolution of the system state, the Koopman approach introduces a transformation of the measured variables into a higher-dimensional space, where the system dynamics can be approximated as linear.
+The Koopman operator framework provides a data-driven approach for modeling nonlinear dynamical systems using linear representations in an augmented state space.
+Instead of directly modeling the system state's nonlinear evolution, the Koopman approach maps the measured variables into a higher-dimensional space, where the system dynamics can be approximated as linear.
 
 Consider a discrete-time nonlinear system described by
 \begin{equation}
@@ -29,8 +28,8 @@ For a lifting function $g(\cdot)$, it satisfies
 \mathcal{K} g(x_k, u_k) = g(x_{k+1}, u_{k+1}).
 \end{equation}
 
-An important property of the Koopman operator is that it is linear, even though the underlying system dynamics are nonlinear. 
-This allows the system evolution to be analyzed using spectral properties of the operator.
+An important property of the Koopman operator is that it is linear, even though the underlying system dynamics are nonlinear.
+This allows the system's evolution to be analyzed using the operator's spectral properties \cite{cassamo2020koopman}.
 
 The spectral decomposition of the Koopman operator is defined by its eigenvalues $\lambda_i$ and eigenfunctions $g_i(\cdot)$, satisfying
 \begin{equation}
@@ -51,7 +50,7 @@ C_{\mathcal{K}} \in \mathbb{R}^{n_y \times n_z},
 where $n_u$ and $n_y$ denote the dimensions of the input and output, respectively.
 
 For example, a system with a single measured state ($n_x = 1$), may be lifted to a state vector of dimension $n_z = 10$ by including nonlinear features of the measured temperature and input signal. This results in a Koopman model with matrices $A_{\mathcal{K}} \in \mathbb{R}^{10 \times 10}$ and $B_{\mathcal{K}} \in \mathbb{R}^{10 \times 1}$, while preserving a linear structure suitable for prediction and control.
-The selection of the lifted state dimension represents a trade-off between model accuracy and computational complexity. In practice, the dimension $n_z$ is determined by the chosen lifting function and identification method and is typically selected based on empirical performance and computational considerations \cite{korda2018}.
+Selecting the lifted state dimension involves a trade-off between model accuracy and computational complexity. In practice, the dimension $n_z$ is determined by the chosen lifting function and identification method and is typically selected based on empirical performance and computational considerations \cite{korda2018}.
 
 In the lifted space, the system dynamics can be approximated by a linear model of the form
 \begin{equation}
@@ -83,14 +82,13 @@ The predicted output is obtained using a decoder
 \begin{equation}
 \hat{y}_k = f_y^{-1}(z_k).
 \end{equation}
-In the implemented Deep Koopman model, this mapping is realized as a linear decoder, which corresponds directly to the matrix $C_{\mathcal{K}}$.
+In the implemented Deep Koopman model, this mapping is implemented as a linear decoder, corresponding directly to the matrix $C{\mathcal{K}}$.
 
 All components of the model, including the encoder, Koopman operator $K$, and decoder, are identified simultaneously from data by minimizing a multi-step prediction error over measured trajectories.
 
-The identification is performed using the Neuromancer framework, which formulates the problem as a structured optimization task and enables efficient training using gradient-based methods.
+The identification is performed using the Neuromancer framework, which formulates the problem as a structured optimization task and enables efficient gradient-based training.
 
 Once the matrices are identified, the resulting Koopman model is a standard linear state-space model defined in the lifted coordinates and can be directly used for prediction and control.
-
 
 The individual steps of the identification process are summarized below.
 
@@ -162,7 +160,7 @@ The resulting Koopman model is then represented as a linear state-space system i
 \section{Model Predictive Control}
 \label{sec:MPC}
 
-Model Predictive Control (MPC) is an advanced control strategy based on the repeated solution of a constrained finite-horizon optimization problem \cite{rawlings_mpc}. At each sampling instant, a prediction model is used to predict future system behavior over a predefined prediction horizon, and an optimal sequence of control inputs is computed.
+Model Predictive Control (MPC) is an advanced control strategy based on repeatedly solving a constrained finite-horizon optimization problem \cite{rawlings_mpc}. At each sampling instant, a prediction model is used to predict future system behavior over a predefined prediction horizon, and an optimal sequence of control inputs is computed.
 
 MPC operates according to the receding horizon principle. Although an optimal input sequence is computed over the prediction horizon, only the first control input is applied to the system. At the next sampling instant, the optimization problem is solved again using updated state estimates.
 
@@ -175,7 +173,7 @@ y_k = C x_k + D u_k,
 \end{equation}
 where $x_k \in \mathbb{R}^n$ denotes the system state vector, $u_k \in \mathbb{R}^m$ is the control input, and $y_k \in \mathbb{R}^p$ is the system output. The matrices $A$, $B$, $C$, and $D$ describe the discrete-time prediction model. In many thermal systems, including the system considered in this work, the direct feedthrough term $D$ is zero or negligible.
 
-The control objective is regulation to a steady-state operating point. This objective is expressed through a quadratic cost function that penalizes deviations of the predicted output from zero and excessive control effort. The MPC optimization problem solved at each sampling instant is given by
+The control objective is to regulate to a steady-state operating point. This objective is expressed through a quadratic cost function that penalizes deviations of the predicted output from zero and excessive control effort. The MPC optimization problem solved at each sampling instant is given by
 \begin{equation}
     \begin{aligned}
     \min_{\{u_k\}_{k=0}^{N-1}} \quad &
@@ -196,24 +194,26 @@ The control objective is regulation to a steady-state operating point. This obje
     
 where $N$ denotes the prediction horizon, $\hat{x}_0$ is the estimated system state at the current sampling instant, and $Q \succeq 0$ and $R \succ 0$ are weighting matrices. The matrix $Q$ determines the importance of output regulation, while $R$ penalizes aggressive control actions.
 
-Input and output constraints reflect physical and operational limitations of the controlled system. In thermal processes, input constraints typically represent actuator saturation, while output constraints are used to keep temperatures within safe operating limits \cite{mpc_heat_exchanger}.
+Input and output constraints reflect physical and operational limitations of the controlled system. In thermal processes, input constraints typically represent actuator saturation, while output constraints are used to keep temperatures within safe operating limits \cite{rawlings_mpc, mpc_heat_exchanger}.
 
-The prediction horizon $N$ affects both control performance and computational complexity. In practical implementations, it is selected as a compromise between prediction accuracy and real-time computational requirements. For our work we used $N = 20$, which gave sufficient results.
+The prediction horizon $N$ influences both control performance and computational complexity. In practical implementations, its value is chosen to balance prediction accuracy with real-time computational demands \cite{rawlings_mpc}. In this thesis, $N = 20$ was selected based on empirical results.
 
-This MPC formulation is used consistently for both the Strejc-based and Koopman-based prediction models. The difference between the two control approaches lies only in the prediction model matrices used within the optimization problem, allowing a direct and fair comparison.
+This MPC formulation is used consistently for both the Strejc-based and Koopman-based prediction models. The difference between the two control approaches lies solely in the prediction model matrices used in the optimization problem, enabling a direct and fair comparison.
 
 
 \section{Kalman Filter}
 \label{sec:KF}
 
-The Kalman filter (KF) is a state estimation method used to estimate the internal states of dynamic systems based on a mathematical model and noisy measurements. In control applications, it provides reliable state estimates for feedback controllers, particularly when not all system states are directly measurable \cite{kalman1960,ljung_sysid}.
+The Kalman filter (KF) is a state-estimation method that uses a mathematical model and noisy measurements to estimate the internal states of dynamic systems. In control applications, it provides reliable state estimates for feedback controllers, particularly when not all system states are directly measurable \cite{kalman1960,ljung_sysid}.
 
 Consider a discrete-time linear system with process and measurement noise described by
 \begin{equation}
 x_{k+1} = A x_k + B u_k + w_k,
+\label{eq:strejc_state}
 \end{equation}
 \begin{equation}
 y_k = C x_k + v_k,
+\label{eq:strejc_state2}
 \end{equation}
 where $w_k$ and $v_k$ denote zero-mean Gaussian process and measurement noise, respectively.
 
@@ -238,10 +238,10 @@ K_k = P_{k|k-1} C^\top \left( C P_{k|k-1} C^\top + R_{\mathrm{KF}} \right)^{-1},
 \begin{equation}
 P_{k|k} = (I - K_k C) P_{k|k-1},
 \end{equation}
-where $P_{k|k}$ is the updated estimation error covariance matrix, $R_{\mathrm{KF}}$ denotes the measurement noise covariance matrix of the Kalman filter, $K_k$ is the Kalman gain and $I \in \mathbb{R}^{n \times n}$ is the identity matrix.
+where $P_{k|k}$ is the updated estimation error covariance matrix, $R_{\mathrm{KF}}$ denotes the measurement noise covariance matrix of the Kalman filter, $K_k$ is the Kalman gain, and $I \in \mathbb{R}^{n \times n}$ is the identity matrix.
 
 
-In this work, the KF is used to estimate the system state required by the MPC controller. In the Koopman-based MPC implementation, the KF is applied in the lifted state space and estimates the Koopman state vector used for prediction and control. In contrast, in the Strejc-based MPC, the KF estimates the internal state of the first-order linear model representing the dominant thermal dynamics of the system. The same estimation structure is used in both control approaches, ensuring a consistent state estimation framework for the subsequent comparison.
+In this work, the Kalman filter is used to estimate the system state required by the MPC controller. For the Koopman-based MPC implementation, the KF operates in the lifted state space and estimates the Koopman state vector for prediction and control. Conversely, in the Strejc-based MPC, the KF estimates the internal state of the first-order linear model that represents the primary thermal dynamics of the system. By employing the same estimation structure in both approaches, a consistent framework for comparison is maintained.
 
 
 \section{Koopman-Based Model Predictive Control}
@@ -250,7 +250,7 @@ Koopman-based Model Predictive Control (Koopman MPC) combines the standard linea
 In contrast to the classical MPC based on a first-order Strejc model, the prediction model in Koopman MPC is formulated in the lifted state space introduced in Section~\ref{sec:Koopman_operator}. 
 The lifted-state dynamics and output mapping given by equations~\eqref{eq:koopman_state} and~\eqref{eq:koopman_output} are directly used within the MPC prediction scheme \cite{korda2018,koopman_mpc_review}.
 
-From the perspective of MPC, the Koopman-based prediction model is treated as a standard linear state-space model.
+From the MPC perspective, the Koopman-based prediction model is treated as a standard linear state-space model.
 The same quadratic cost function and input and output constraints as in classical MPC are employed.
 The main difference lies in the prediction model, which operates on the lifted state vector $z_k$, and in the use of a state estimator to initialize the prediction.
 
@@ -276,7 +276,7 @@ $\hat{z}_0 \in \mathbb{R}^{n_z}$ denotes the estimated lifted state vector at th
 obtained from the Kalman filter and used as the initial condition for the MPC prediction.
 
 In closed-loop operation, the Koopman MPC controller proceeds as follows.
-At each sampling instant, the outlet temperature of the heat exchanger is measured and scaled.
+At each sampling instant, the heat exchanger outlet temperature is measured and scaled.
 This measurement, together with the previously applied control input, is used by the Kalman filter described in Section~\ref{sec:KF} to estimate the lifted state vector $\hat{z}_k$.
 The estimated state $\hat{z}_k$ is then used as the initial condition of the MPC prediction model.
 

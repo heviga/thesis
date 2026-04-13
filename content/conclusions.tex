@@ -2,9 +2,9 @@
 \section{Introduction}
 \label{sec:practical_introduction}
 
-This chapter focuses on the practical implementation of modeling and control strategies for a plate heat exchanger using the Armfield Process Plant Trainer PCT23 \cite{armfield_pct23_manual}. It presents the procedures for system identification, controller design, and the evaluation of control performance through simulations and real-time experiments.
+This chapter presents the practical implementation of modeling and control strategies for a plate heat exchanger, specifically utilizing the Armfield Process Plant Trainer PCT23 \cite{armfield_pct23_manual}. It details the procedures for system identification, controller design, and performance evaluation through both simulation and real-time experimentation. The approach throughout closely follows established practices in process control \cite{ljung_sysid, rawlings_mpc}, while adapting recent data-driven modeling techniques where appropriate.
 
-The Armfield PCT23 is a laboratory-scale plate heat exchanger consisting of two hydraulically separated circuits: a hot fluid circuit and a cold fluid circuit. Heat transfer between the two media takes place in the plate heat exchanger, while the overall process dynamics are influenced by the flow rates and inlet temperatures of both circuits. Owing to the characteristics of heat transfer, the system exhibits slow dynamics and nonlinear behavior typical of thermal processes.
+The Armfield PCT23 is a laboratory-scale plate heat exchanger with two hydraulically separated circuits: a hot-fluid circuit and a cold-fluid circuit. Heat transfer between the two media takes place in the plate heat exchanger, while the overall process dynamics are influenced by the flow rates and inlet temperatures of both circuits. Owing to the characteristics of heat transfer, the system exhibits slow dynamics and nonlinear behavior typical of thermal processes.
 
 \begin{figure}[htbp]
     \centering
@@ -19,24 +19,24 @@ The Armfield PCT23 is a laboratory-scale plate heat exchanger consisting of two 
 
 The hot medium is heated by an electric heater, whose power is regulated by a dedicated controller to maintain the inlet temperature of the hot circuit at an approximately constant level. In this work, the heater control is treated as an auxiliary control loop and is not included in the main control design.
 
-A photograph of the experimental setup is shown in Figure~\ref{fig:pct23_plant}. The plate heat exchanger is indicated by label~(1). The hot water circuit is driven by the heating pump, shown as component~(5), which supplies heated water to the heat exchanger. The remaining components include the hot and cold water reservoirs and the corresponding circulation pumps.
+A photograph of the experimental setup is shown in Figure~\ref{fig:pct23_plant}. The plate heat exchanger is indicated by label~(1). The hot water circuit is driven by the heating pump (component~(5), which supplies heated water to the heat exchanger. The remaining components include the hot and cold water reservoirs and the corresponding circulation pumps.
 
 The controlled variable is the outlet temperature from the heat exchanger, denoted as $T_4$. The manipulated variable is the pump power of the hot circuit (Pump~F), which directly affects the flow rate and, consequently, the heat transfer rate. The control input is constrained by the physical limits of the pump within the range of $20$--$100~\%$.
 
-The objective of the practical part is to identify suitable models of the process based on experimental data, design MPC controllers using both a classical first-order Strejc model and a data-driven Koopman model, and compare their performance under identical constraints in simulation and real-time operation on the PCT23 system.
 
+The main aim of the practical part is to identify suitable models of the heat exchanger process from experimental data, design MPC controllers using both a classical first-order model and a data-driven Koopman model, and compare their closed-loop performance under identical constraints in both simulation and real-time operation on the PCT23 system. This comparative methodology has been widely adopted in recent literature for benchmarking advanced control strategies \cite{benchmark_mpc2021}.
 
 
 
 \section{System Identification}
 
-System identification experiments were conducted to obtain input--output data suitable for the development of both classical and data-driven models of the heat exchanger. The experiments were performed on the Armfield PCT23 setup described in the previous section.
+System identification experiments were conducted to collect input–output data for developing both classical and data-driven models of the heat exchanger. All experiments were performed on the Armfield PCT23 setup described previously. The identification process follows standard procedures outlined in system identification textbooks \cite{ljung_sysid}.
 
-Before the identification measurements, the heat exchanger was operated until steady conditions were achieved. The temperature of the hot circuit was regulated by the built-in electric heater, whose power was controlled by a simple proportional controller. The controller gain was selected such that the inlet temperature of the hot circuit was maintained close to a steady-state value. Throughout all identification experiments, the heater control settings were kept unchanged to ensure consistent thermal conditions. This auxiliary control loop was not modified and is therefore not considered part of the identification process.
+Before the identification measurements, the heat exchanger was operated until steady conditions were achieved. The temperature of the hot circuit was regulated by the built-in electric heater, whose power was controlled by a simple proportional controller. The controller gain was selected to maintain the inlet temperature of the hot circuit close to a steady-state value. Throughout all identification experiments, the heater control settings were kept unchanged to ensure consistent thermal conditions. This auxiliary control loop was not modified and is therefore not considered part of the identification process.
 
-During the identification experiments, the pump supplying the hot circuit (Pump~F) was used as the manipulated input. The pump speed was changed in steps every $250~\mathrm{s}$ to capture the dynamic response of the system.
+During the identification experiments, the pump supplying the hot circuit (Pump~F) was used as the manipulated input. The pump speed was changed in steps every $250~\mathrm{s}$ to capture the system's dynamic response.
 
-The pump of the cold circuit (Pump~W) was operated at a constant speed of $50~\%$ throughout the experiments. This ensured a steady flow rate of the cold medium and allowed the influence of the hot-side flow rate on the outlet temperature to be isolated.
+The pump of the cold circuit (Pump~W) was operated at a constant speed of $50~\%$ throughout the experiments. This ensured a steady flow rate of the cold medium and allowed the hot flow rate to be isolated from the outlet temperature.
 
 The measured output used for identification was the temperature at the outlet of the heat exchanger, denoted as $T_4$. The pump speed and the corresponding outlet temperature were recorded continuously. Figure~\ref{fig:raw_measurements} shows the applied input signal (Pump~F speed) and the resulting outlet temperature response used for system identification.
 
@@ -66,7 +66,7 @@ Step responses were extracted from the measured data by detecting changes in the
 \subsection{Step-Response-Based Identification of the Heat Exchanger}
 \label{sec:strejc_ident}
 
-An average normalized step response was obtained by averaging all valid normalized responses from the identification dataset. This averaged response provides a representative description of the dominant process dynamics and is used for the identification of a simple linear model. The resulting average step response is shown in Figure~\ref{fig:avg_step}.
+An average normalized step response was obtained by averaging all valid normalized responses from the identification dataset. This averaged response provides a representative description of the dominant process dynamics and is used to identify a simple linear model. The resulting average step response is shown in Figure~\ref{fig:avg_step}.
 
 \begin{figure}[htbp]
     \centering
@@ -90,16 +90,16 @@ C = 1, \qquad
 D = 0.
 \end{equation}
 
-Substituting the identified parameters into the discrete-time model introduced in equation~\eqref{eq:strejc_state} yields the following representation:
+Substituting the identified parameters into the discrete-time model introduced in equation~\eqref{eq:strejc_state} and \eqref{eq:strejc_state2} yields the following representation:
 \begin{equation}
 x_{k+1} = 0.985\,x_k + 0.016\,u_k,
 \qquad
 y_k = x_k.
 \end{equation}
 
-The identified linear model is subsequently used as the prediction model in the baseline MPC design.
+The identified linear model was subsequently used as the prediction model in the baseline MPC design, following common practice in industrial control applications \cite{rawlings_mpc}.
 
-To evaluate the predictive capability of the model, an open-loop simulation was performed using the testing dataset. In this setting, the measured input signal was applied directly to the model, while the output was not corrected using measurements. The resulting trajectory therefore represents a pure model prediction driven only by the input signal and the initial condition.
+To evaluate the model's predictive capability, an open-loop simulation was performed on the test dataset. In this setting, the measured input signal was applied directly to the model, while the output was not corrected using measurements. The resulting trajectory, therefore, represents a pure model prediction driven only by the input signal and the initial condition.
 
 The model parameters were identified using the complete dataset. For validation, the data were split, and the second part of the experiment, starting at $t = 2250~\mathrm{s}$, was used for open-loop testing.
 
@@ -115,7 +115,7 @@ For the identified linear model, the overall open-loop RMSE obtained on the test
 \mathrm{RMSE}_{\mathrm{OL}} = 1.6962\,^{\circ}\mathrm{C}.
 \]
 
-This value provides a direct measure of model accuracy, as it reflects how well the model predicts the process output without feedback. The results indicate that the model captures the dominant thermal dynamics of the heat exchanger, while prediction errors gradually accumulate due to nonlinear effects and unmodeled disturbances.
+This value is a direct measure of model accuracy, reflecting the model’s ability to predict process output in open-loop conditions. The results indicate that the model captures the main thermal dynamics of the heat exchanger, though prediction errors accumulate over time due to nonlinearities and unmodeled disturbances \cite{ljung_sysid}.
 
 Although the model is sufficient for basic control design, these limitations motivate the use of more expressive data-driven models, such as the Koopman-based approach introduced in the following sections.
 
@@ -124,7 +124,7 @@ Although the model is sufficient for basic control design, these limitations mot
 
 This subsection summarizes how the Koopman prediction model used later for control was obtained. While Section~\ref{sec:Koopman_operator} presents the general Koopman framework, here we focus on the specific model structure, training setup, and how the final state-space matrices were extracted.
 
-The identification was implemented in the \texttt{Neuromancer} framework~\cite{neuromancer2022}. Before training, the measured output and input signals were standardized using precomputed \texttt{StandardScaler} objects (mean and standard deviation), mainly to improve numerical conditioning. The scaling parameters used in this work were
+The identification was carried out using the \texttt{Neuromancer} framework~\cite{neuromancer2022}, which enables efficient training of data-driven dynamical models. Before training, measured output and input signals were standardized using precomputed \texttt{StandardScaler} objects (mean and standard deviation), a standard practice to improve numerical conditioning \cite{goodfellow2016deep}. The scaling parameters used in this work were
 \[
 \mu_y = 59.0676, \qquad \sigma_y = 6.9122,
 \]
@@ -144,7 +144,7 @@ where $K$ corresponds to a trainable linear layer and $B_{\mathcal K}$ is implic
 \]
 The Koopman matrices used later in MPC correspond directly to the learned network weights. The total number of trainable parameters was $8170$.
 
-Training was performed on segments of length $n_{\mathrm{steps}}=50$ using mini-batches of size $b_s=100$. We used the Adam optimizer with learning rate $10^{-3}$ and a fixed random seed. The maximum number of epochs was set to $900$, with early stopping monitored on the development loss (patience $200$) and a warmup period of $100$ epochs. Training took approximately $35$ minutes on a single GPU.
+Training was performed on data segments of $n_{\mathrm{steps}}=50$ and mini-batches of size $b_s=100$. The Adam optimizer was employed with a learning rate of $10^{-3}$ and a fixed random seed, following best practices in neural network training \cite{kingma2015adam}. The maximum number of epochs was set to $900$, with early stopping based on development loss (patience $200$) and a warmup period of $100$ epochs. Training duration was approximately $35$ minutes on a single GPU.
 
 Training minimized a weighted sum of loss terms that penalize prediction errors and enforce consistency of the lifted representation. In contrast to the general formulation presented in Section~\ref{sec:Koopman_operator}, the practical implementation used the following weights:
 \begin{itemize}
@@ -167,7 +167,7 @@ The identified Koopman model was then evaluated in open loop on the available te
 \mathrm{RMSE}_{\mathrm{OL}}^{\mathrm{Koop}} = 1.6681\,^{\circ}\mathrm{C}.
 \]
 
-The results indicate that the Koopman model achieves a slightly lower prediction error compared to the first-order model. The difference is relatively small, which suggests that both models capture the dominant system dynamics, while the Koopman model provides a marginal improvement due to its ability to represent nonlinear effects.
+The results indicate that the Koopman model achieves a slightly lower prediction error compared to the first-order model. The difference is relatively small, suggesting that both models capture the dominant system dynamics, while the Koopman model provides a marginal improvement by representing nonlinear effects.
 
 The identified matrices $A_{\mathcal K}$, $B_{\mathcal K}$, and $C_{\mathcal K}$ were extracted directly from the trained model parameters as
 \[
@@ -177,7 +177,7 @@ C_{\mathcal K} = f_y^{-1}.\mathrm{weight},
 \]
 with $D_{\mathcal K}=0$, and are used in the following sections for Koopman-based MPC design and experimental evaluation on the PCT23 system.
 
-For a direct visual comparison, Figure~\ref{fig:open_loop_compare} shows the measured test output together with the open-loop predictions of both identified models. The linear model follows the dominant trend of the measured response well, while the Koopman model provides a comparable prediction quality. The figure confirms that both models are suitable for subsequent controller design, although both accumulate prediction error over longer horizons.
+For a direct visual comparison, Figure~\ref{fig:open_loop_compare} shows the measured test output alongside the open-loop predictions from both identified models. The linear model follows the dominant trend of the measured response well, while the Koopman model provides comparable predictive performance. The figure confirms that both models are suitable for subsequent controller design, although both accumulate prediction error over longer horizons.
 
 \begin{figure}[htbp]
     \centering
@@ -204,7 +204,7 @@ For the Koopman-based controller, the prediction model is given by the
 Koopman system matrices identified in
 equations~\eqref{eq:koopman_state}, \eqref{eq:koopman_output}.
 The lifted state vector has dimension $n_z = 10$, corresponding to the
-learned latent representation of the measured temperature and input.
+learned the latent representation of the measured temperature and input.
 
 
 Since only the outlet temperature $T_4$ is measured, a KF is used
@@ -264,7 +264,7 @@ Closed-loop simulations were performed to compare the Koopman-based MPC and the 
 T_0 \in \{45,50,55,58,60,62,66,68\}\,^{\circ}\mathrm{C}.
 \]
 
-As a simulation plant, a nonlinear data-driven baseline model was used. This model was identified in Python using the NeuroMANCER framework and represents the outlet temperature dynamics in a lifted latent space. In contrast to the simplified linear model used for comparison, the baseline model combines neural-network-based lifting and reconstruction with linear latent-state evolution, which allows it to capture nonlinear input--output behavior more accurately.
+A nonlinear data-driven baseline model was used as the simulation plant. This model was identified using the NeuroMANCER framework in Python and represents outlet temperature dynamics in a lifted latent space. Unlike the simplified linear model used for comparison, the baseline model combines neural-network-based lifting and reconstruction with linear latent-state evolution, enabling a more accurate representation of nonlinear input–output behavior \cite{yeung2019learning, otto2019linearly}.
 
 The baseline model consists of four main components:
 \begin{itemize}
@@ -286,18 +286,18 @@ where $f_{\mathrm{dec}}(\cdot)$ denotes the decoder network.
 
 For comparison, the second controller was constructed using a linear model identified from the step response. This model provides a simplified linear approximation of the process dynamics around the operating region and is used as the prediction model inside the corresponding MPC controller.
 
-It should be emphasized that these closed-loop simulations are used primarily to verify that both predictive controllers are able to steer the simulated plant to the desired steady-state operating region in a stable and consistent manner. Therefore, the simulation study serves mainly as a comparative validation of controller behavior on a common baseline model and is not intended to exactly reproduce the behavior of the real experimental device.
+It is important to note that these closed-loop simulations are primarily intended to verify that both predictive controllers can steer the simulated plant to the desired steady-state region in a stable and consistent manner. The simulation study serves mainly as a comparative validation of controller behavior on a common reference model, rather than an exact replication of the real experimental device \cite{benchmark_mpc2021}.
 
-A representative example is shown in Figure~\ref{fig:cl_response45} for the initial temperature $T_0 = 45\,^{\circ}\mathrm{C}$, i.e., for an initial condition significantly below the steady-state operating region. In this case both controllers first apply a strong control action close to the actuator limit and then gradually reduce the input as the output approaches steady state. The responses confirm that both MPC formulations are able to steer the system from a large initial deviation toward the desired operating region. This case is used mainly to illustrate the stabilizing behavior of the controllers and to confirm that the designed MPC schemes regulate the simulated plant to steady state even for more demanding initial conditions.
+A representative example is shown in Figure~\ref{fig:cl_response45} for the initial temperature $T_0 = 45,^{\circ}\mathrm{C}$, i.e., for an initial condition significantly below the steady-state operating region. In this case, both controllers first apply a strong control action close to the actuator limit and then gradually reduce the input as the output approaches steady state. The responses confirm that both MPC formulations can steer the system from a large initial deviation toward the desired operating region. This case is used mainly to illustrate the controllers' stabilizing behavior and to confirm that the designed MPC schemes regulate the simulated plant to steady state, even under more demanding initial conditions.
 
 \begin{figure}[!t]
     \centering
     \includegraphics[width=0.95\textwidth]{images/IC_01_y0_45_00.png}
-    \caption{Closed-loop response and control input comparison for Koopman MPC and MPC based on the linear model identified from step response for the initial condition $T_0 = 45\,^{\circ}\mathrm{C}$. This case illustrates that both controllers regulate the simulated plant to the steady-state operating region also from a large initial deviation.}
+    \caption{Closed-loop response and control input comparison for Koopman MPC and MPC based on the linear model identified from step response for the initial condition $T_0 = 45\,^{\circ}\mathrm{C}$. This case illustrates that both controllers regulate the simulated plant to the steady-state operating region, also from a large initial deviation.}
     \label{fig:cl_response45}
 \end{figure}
 
-To evaluate the closed-loop performance, three metrics were considered: the root mean square error (RMSE), the integral of absolute error (IAE), and the closed-loop quadratic objective value. The IAE is defined as
+To evaluate closed-loop performance, three metrics were considered: root mean square error (RMSE), integral of absolute error (IAE), and the closed-loop quadratic objective value. The IAE is defined as
 \begin{equation}
 \mathrm{IAE} = \sum_{k=1}^{N} \left| y(k) - y_{\mathrm{ss}} \right|,
 \label{eq:iae}
@@ -306,7 +306,7 @@ where $y(k)$ denotes the outlet temperature at time step $k$, $y_{\mathrm{ss}}$ 
 
 For the initial condition $T_0 = 45\,^{\circ}\mathrm{C}$, the Koopman MPC achieved $\mathrm{RMSE}=4.58\,^{\circ}\mathrm{C}$, $\mathrm{IAE}=358.28$, and $J_{\mathrm{CL}}=563.53$, whereas the MPC based on the linear model identified from the step response achieved $\mathrm{RMSE}=4.62\,^{\circ}\mathrm{C}$, $\mathrm{IAE}=380.57$, and $J_{\mathrm{CL}}=562.36$. Although the quadratic objective values are almost identical in this case, the Koopman MPC yields slightly smaller tracking errors in both RMSE and IAE.
 
-Table~\ref{tab:performance_metrics} summarizes the results for all tested initial temperatures. For initial conditions close to the operating point, both controllers achieve very small tracking errors. As the initial temperature moves further away from the reference, both RMSE and IAE increase, which is expected due to larger transient deviations and stronger control action requirements.
+Table~\ref{tab:performance_metrics} summarizes the results for all tested initial temperatures. For initial conditions close to the operating point, both controllers achieve very small tracking errors. As the initial temperature moves farther from the reference, both RMSE and IAE increase, as expected due to larger transient deviations and stronger control action requirements.
 
 \begin{table}[!t]
     \centering
@@ -338,11 +338,11 @@ Table~\ref{tab:performance_metrics} summarizes the results for all tested initia
 
 The three performance metrics exhibit very similar trends for both controllers. The RMSE and IAE values are smallest for initial temperatures near the operating point and increase for larger deviations from steady state. The objective function follows the same qualitative pattern.
 
-The results do not indicate a strong dominance of one controller over the other across all operating conditions. However, the Koopman MPC achieves slightly lower RMSE for all tested initial temperatures and also lower IAE in every tested case. This suggests that the Koopman-based prediction model provides a slightly better overall tracking quality on the considered simulation plant, even though the differences remain relatively small.
+The results do not indicate a strong dominance of one controller over the other across all operating conditions. However, the Koopman MPC achieves slightly lower RMSE across all tested initial temperatures and lower IAE in every case. This suggests that the Koopman-based prediction model provides a slightly better overall tracking quality on the considered simulation plant, even though the differences remain relatively small.
 
 When averaged over all tested initial conditions, the mean RMSE is $1.59\,^{\circ}\mathrm{C}$ for the Koopman MPC and $1.65\,^{\circ}\mathrm{C}$ for the linear-model-based MPC. The mean IAE values are $115.77$ and $130.41$, respectively. The mean closed-loop objective values are $131.37$ and $131.79$, which are nearly identical.
 
-Overall, both controllers provide very similar closed-loop performance and both reliably regulate the simulated nonlinear baseline plant to the steady-state operating region. Within this simulation study, the Koopman MPC achieves slightly lower average tracking error, both in terms of RMSE and IAE, while the closed-loop objective remains practically the same for both approaches.
+Overall, both controllers provide very similar closed-loop performance, and both reliably regulate the simulated nonlinear baseline plant to the steady-state operating region. In this simulation study, the Koopman MPC achieves slightly lower average tracking error, both in RMSE and IAE, while the closed-loop objective remains practically the same across both approaches.
 
 All three performance metrics are summarized in Figure~\ref{fig:sim_metrics_summary}.
 
@@ -374,7 +374,7 @@ The only manipulated variable was the pump speed controlled by the MPC.
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=0.95\textwidth]{images/compare_cl_T0_55.png}
+\includegraphics[width=\textwidth]{images/compare_cl_T0_55.png}
 \caption{Experimental closed-loop response and control input for the initial temperature $T_0 = 55,^{\circ}\mathrm{C}$.}
 \label{fig:cl_exp_T0_55}
 \end{figure}
@@ -384,18 +384,18 @@ $T_0 = 55,^{\circ}\mathrm{C}$.
 Both controllers regulate the outlet temperature towards the operating point and reach a stable steady-state region.
 
 At the beginning of the experiment, both controllers apply a strong control action close to the actuator limits.
-The Koopman MPC remains at the upper input constraint slightly longer and exhibits a more aggressive behavior, which leads to a small overshoot in the temperature.
+The Koopman MPC remains at the upper input constraint for slightly longer and exhibits more aggressive behavior, leading to a small temperature overshoot.
 The linear MPC reduces the input earlier and follows a smoother trajectory towards the steady state.
 
 In terms of performance metrics, both controllers achieve comparable results.
 For $T_0 = 55,^{\circ}\mathrm{C}$, the RMSE is $2.004,^{\circ}\mathrm{C}$ for the Koopman MPC and $1.872,^{\circ}\mathrm{C}$ for the linear MPC.
 The IAE values are $272.46$ and $296.91$, respectively.
-The objective function value is lower for the linear MPC, which corresponds to smoother control actions and smaller input variations.
+The objective function value is lower for linear MPC, indicating smoother control actions and smaller input variations.
 
 The differences can be related to the behavior of the real system.
-The heat exchanger exhibits nonlinearities and disturbances that are not fully captured by either model.
-The Koopman MPC tends to react more strongly when the temperature is below the expected value, which results in larger initial control actions and occasional overshoot.
-The linear MPC behaves more conservatively, which can lead to slightly lower RMSE but slower adjustment of the input.
+The heat exchanger exhibits nonlinearities and disturbances that neither model fully captures.
+The Koopman MPC tends to respond more strongly when the temperature is below the expected value, leading to larger initial control actions and occasional overshoot.
+The linear MPC behaves more conservatively, leading to slightly lower RMSE but slower input adjustment.
 
 Overall, both controllers provide consistent and stable regulation of the system.
 The main differences are visible in the transient phase, particularly in the aggressiveness of the control input and the speed of convergence.
@@ -403,7 +403,7 @@ The main differences are visible in the transient phase, particularly in the agg
 \begin{figure}[!ht]
 \centering
 \includegraphics[width=\textwidth]{images/metrics_vs_T0_from55.png}
-\caption{Experimental performance metrics (RMSE, IAE and objective value) evaluated for different initial outlet temperatures $T_0$.}
+\caption{Experimental performance metrics (RMSE, IAE, and objective value) evaluated for different initial outlet temperatures $T_0$.}
 \label{fig:exp_metrics}
 \end{figure}
 
@@ -412,7 +412,7 @@ The RMSE decreases as the initial temperature approaches the operating point and
 $T_0 = 60$--$66,^{\circ}\mathrm{C}$ for both controllers.
 
 The IAE shows a similar dependence on the initial condition.
-The lowest IAE values are obtained close to the operating point and increase as the initial temperature moves further away.
+The lowest IAE values are obtained near the operating point and increase as the initial temperature moves farther away.
 
 Table~\ref{tab:performance_metrics_exp} summarizes the performance metrics for all tested initial temperatures.
 
@@ -447,10 +447,10 @@ RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ \\
 \end{table}
 
 The objective function values are very similar for both controllers.
-In most cases, the linear MPC gives a slightly lower objective value, which can be explained by smoother control actions and smaller changes of the input.
+In most cases, the linear MPC yields a slightly lower objective value, which can be attributed to smoother control actions and smaller input changes.
 The Koopman MPC tends to use more aggressive input moves, especially at the beginning of the response.
 
-The differences between the Koopman MPC and the linear MPC follow the same trend as in simulation and the steady-state behavior of both controllers is similar.
+The differences between the Koopman MPC and the linear MPC follow the same trend as in simulation, and both controllers exhibit similar steady-state behavior.
 The most visible differences occur during the initial transient phase, where the Koopman MPC may produce larger initial input changes.
 
 
@@ -469,7 +469,7 @@ The end of the transient was determined as the first time instant when
 the output entered a small band around the target value and stayed inside
 this band for at least $N_{\mathrm{hold}} = 5$ consecutive samples. 
 The width of this band was selected based on the noise level observed in
-the measured data. From steady-state parts of the identification
+the measured data. From the steady-state parts of the identification
 experiments, the temperature signal varied approximately within
 $\pm 0.2\,^\circ\mathrm{C}$. 
 Based on this observation, the band was set to twice this variation,
@@ -518,9 +518,9 @@ end of the transient interval used in the evaluation.
 
 Both controllers
 bring the temperature close to the steady-state with a small steady-state error.
-The response comes from a real experiment executed sequentially, which result in small differences of the measured temperature.
+The response comes from a real experiment executed sequentially, which results in small differences in the measured temperature.
 At the beginning, the Koopman MPC keeps the input at the upper limit a bit
-longer. Afterwards, it decreases the input less aggressively than the linear MPC. The linear-model-based MPC reduces the input sooner and more aggressively,
+longer. Afterward, it decreases the input less aggressively than the linear MPC. The linear-model-based MPC reduces the input sooner and more aggressively,
 and the temperature approaches the higher temperature steady-state more slowly. In this instance, the Koopman MPC leads
 to a faster approach toward the steady-state.
 
@@ -581,41 +581,65 @@ performance; however, neither controller demonstrates uniformly superior perform
 conditions. Overall, the Koopman MPC achieves shorter settling times
 and lower accumulated error, especially in terms of IAE and ITAE. On average, the Koopman MPC achieves a substantially shorter settling time
 ($53.67$ samples compared to $98.67$ samples) and lower mean IAE
-($94.59$ compared to $127.20$). The mean values of ISE and transient
-objective function are very similar for both controllers. 
+($94.59$ compared to $127.20$). The mean values of ISE and the transient
+objective function are very similar for both controllers.
 
 For illustration, take $T_0 = 62,^\circ\mathrm{C}$, where the Koopman MPC reaches the settling band after only $12$ samples, while the linear model-based MPC does not satisfy the settling condition until the end of the observation window. Consequently, the integral-based metrics for the linear MPC become considerably larger, primarily due to the longer transient duration.
 
 
 
 
+\section*{Limitations and Trade-Offs}
+This section discusses key limitations and trade-offs revealed by the comparative study of linear and Koopman-based MPC for plate heat exchanger control, synthesizing both theoretical insights and practical results.
+
+
+Both the first-order linear model and the data-driven Koopman model were identified from experimental data, but each comes with inherent limitations. The linear model captured the dominant process dynamics with a simple structure, facilitating straightforward controller design and robust performance near the operating point~\cite{ljung_sysid}. However, its inability to represent nonlinearities or time-varying behaviors became clear in open-loop tests, where accumulated prediction errors were observed over longer horizons (RMSE $1.70 ^\circ$C, see Section~\ref{sec:strejc_ident}, Table~\ref{tab:performance_metrics}).
+
+
+The Koopman model, leveraging neural-network-based lifting, offered improved flexibility and reduced open-loop prediction error (RMSE $1.67 ^\circ$C) by capturing process nonlinearities~\cite{korda2018, otto2019linearly, yeung2019learning}. This expressiveness, however, required more data, computational resources, and careful tuning (Section~\ref{sec:koopman_identification}). The lack of explicit stability constraints during training also posed risks for model generalization.
+Controller design further highlighted trade-offs. 
+
+Both controllers were implemented with identical structure, constraints, and weights (Section~\ref{sec:mpc_design}), ensuring a fair comparison. Yet, the need for identical tuning may not always yield optimal performance for each modeling paradigm. For instance, the linear controller might benefit from more conservative weighting, while the Koopman controller could exploit its expressiveness for more aggressive transients.
+
+
+Closed-loop simulations (Section~\ref{sec:simulation_results}) showed that both controllers achieved stable regulation. The Koopman-based controller yielded slightly better mean performance metrics (mean RMSE $1.59 ^\circ$C vs. $1.65 ^\circ$C for linear), and consistently achieved lower accumulated error and faster settling times, especially when initial conditions were far from setpoint (see Table~\ref{tab:performance_metrics}, Figure~\ref{fig:sim_metrics_summary}). 
+
+On the other hand, real-world experiments (Section~\ref{sec:experimental_results}) exposed unmodeled disturbances, noise, and actuator nonlinearities not present in simulations. Here, the Koopman MPC still converged faster (mean settling time $53.67$ samples vs. $98.67$ for linear, Table~\ref{tab:transient_per_T0}), but sometimes at the expense of more aggressive and less regular control signals. The linear MPC provided smoother, more predictable inputs, with slightly lower objective values in some experiments near the operating point.
+
+
+These results highlight several critical trade-offs:
+\begin{itemize}
+\item \textbf{Model Simplicity vs. Expressiveness:} Linear MPC is more accessible and robust, but limited to near-linear regimes. Koopman MPC captures a wider range of behaviors but is more complex and data-intensive.
+\item \textbf{Performance vs. Robustness:} Koopman MPC achieves faster transients and lower error at the cost of more variable inputs and greater sensitivity to noise or model mismatch. Linear MPC is more conservative and smooth, but may lag in transient response.
+\item \textbf{Generalizability:} Both models were identified for a specific SISO configuration and regime. Significant changes in plant conditions would require re-identification and possibly controller retuning.
+\item \textbf{Practical Implementation:} Koopman-based methods demand more computational resources and expertise in neural networks, while linear approaches are easier to interpret and deploy.
+\end{itemize}
+In summary, while Koopman-based MPC offers improved transient performance and tracking, it introduces greater modeling and computational complexity compared to classical linear MPC. The choice between approaches should be guided by control objectives, available data, computational resources, and the desired balance between performance and implementation effort.
 
 
 
 
 
 
+  
+\newpage
 
-    \newpage
-    \section*{Conclusions}
-    \label{sec:conclusions}
+\section*{Conclusions}
 
-    This work dealt with modeling and control of a plate heat exchanger using two different prediction models within an MPC framework. A classical first-order Strejc model identified from step responses was compared with a data-driven Koopman model obtained from measured data using a neural-network-based lifting. Both models were used as prediction models in MPC controllers with identical structure, constraints, and tuning, which allows a direct comparison of their behavior.
-    
-    System identification is described in Section~\ref{sec:strejc_ident} for the Strejc model and in Section~\ref{sec:koopman_identification} for the Koopman model. The Strejc model captures the dominant dynamics of the heat exchanger with a simple structure and provides stable predictions around the operating point. The Koopman model represents the system in a higher-dimensional lifted space and is able to describe the nonlinear behavior of the heat exchanger directly from data.
-    
-    The MPC design is presented in Section~\ref{sec:mpc_design}. Both controllers were formulated in normalized coordinates with regulation to zero, corresponding to a chosen operating temperature. The same prediction horizon, cost function weights, constraints, and Kalman filter parameters were used for both controllers so that differences in closed-loop behavior are caused by the prediction models and not by controller tuning.
-    
-    Closed-loop simulations in Section~\ref{sec:simulation_results} show that both controllers regulate the outlet temperature of the heat exchanger without instability. For initial conditions close to the operating point, the tracking error is small for both approaches. For larger deviations, the Koopman MPC typically achieves lower RMSE and IAE values. This is mainly related to a more aggressive initial control action, which drives the system faster towards the reference. The Strejc MPC applies smoother input changes, which often leads to a slightly lower or comparable objective function value, even when the tracking error is higher.
-    
-    Experimental results in Section~\ref{sec:experimental_results} confirm these observations on the real heat exchanger. Both controllers work well on the physical system and are able to regulate the outlet temperature under real disturbances and measurement noise. The performance metrics are mostly consistent with the simulation results. Compared to simulation, the control signals on the real heat exchanger are more irregular, mainly due to disturbances and dynamics that are not captured by the models.
-    This is particularly visible for the Koopman MPC, where the first control move can be estimated more aggressively.
+This work addressed the modeling and control of a plate heat exchanger using two different predictive models within an MPC framework. A first-order linear model identified from step response data was compared with a data-driven Koopman model obtained from measured data using a neural-network-based lifting. Both models were used as prediction models in MPC controllers with identical structures, constraints, and tuning, allowing a direct comparison of their behavior.
 
+System identification is described in Section~\ref{sec:strejc_ident} for the linear model and in Section~\ref{sec:koopman_identification} for the Koopman model. The linear model captures the dominant dynamics of the heat exchanger with a simple structure and provides reliable predictions around the operating point~\cite{ljung_sysid}. The Koopman model represents the system in a higher-dimensional lifted space and can directly describe nonlinear behavior from data~\cite{korda2018, otto2019linearly, yeung2019learning}.
 
+The MPC design is presented in Section~\ref{sec:mpc_design}. Both controllers were formulated in normalized coordinates with regulation to zero, corresponding to the selected steady-state operating temperature. The same prediction horizon, cost function weights, constraints, and Kalman filter parameters were used for both controllers so that the observed differences are caused by the prediction models rather than by controller tuning~\cite{rawlings_mpc}.
 
-    The comparison shows that the Koopman-based MPC usually achieves lower RMSE, especially at the beginning of regulation. This behavior is mainly caused by a more aggressive initial control action. The Strejc-based MPC is based on a simpler model and produces smoother input trajectories, which can be an advantage when large or fast changes of the manipulated variable are unwanted.
+Closed-loop simulations in Section~\ref{sec:simulation_results} show that both controllers regulate the outlet temperature without instability. The comparison was evaluated not only over the full simulation horizon, but also over the transient phase, defined as the interval from the initial condition until the output reaches and stays within a small neighborhood of the steady-state value.
 
-    In this work, the Koopman model was identified for a SISO configuration, with Pump~F as the manipulated variable and the outlet temperature $T_4$ as the controlled output. A change of the controlled variable, manipulated input, or operating regime would require a new identification step. An advantage of the Koopman framework is that the model can be updated directly from measured data, while the MPC formulation can remain unchanged.
-    
-    Overall, both MPC approaches are applicable to the plate heat exchanger. The results indicate a trade-off between model simplicity and achievable tracking performance, with the Koopman-based MPC providing lower tracking errors and the Strejc-based MPC producing smoother control actions.
-    
+The transient evaluation included settling time, IAE, ISE, ITAE, and the closed-loop cost $J_{\mathrm{CL}}$~\cite{astrom2010feedback}. These metrics provide information on how quickly the system approaches steady state and how much error accumulates during this period. Since the metrics are computed over intervals of different lengths, their values are directly influenced by the duration of the transient phase.
+
+The results show that the Koopman-based MPC typically reaches the steady-state region faster, leading to shorter settling times and lower accumulated errors (IAE and ITAE) in most cases. This behavior is caused by a more aggressive initial control action. The linear-model-based MPC, on the other hand, often produces smoother control inputs and in some cases achieves a comparable or slightly lower closed-loop cost, especially when the transient phase is longer.
+
+Experimental results in Section~\ref{sec:experimental_results} confirm these observations on the real heat exchanger. Both controllers were able to regulate the outlet temperature under real operating conditions, including disturbances and measurement noise. Compared to simulation, the control inputs are less smooth, and the responses are more irregular, reflecting the process's real behavior. The differences between the two approaches are again most visible in the transient phase, where the Koopman MPC reacts more aggressively, while the linear MPC shows more gradual control action.
+
+In this work, the Koopman model was identified for a SISO configuration, with Pump~F as the manipulated variable and the outlet temperature $T_4$ as the controlled output. A change of the controlled variable, manipulated input, or operating regime would require a new identification step. An advantage of the Koopman framework is that the model can be updated directly from measured data, while the MPC formulation can remain unchanged.
+
+Overall, both approaches are applicable to the control of the plate heat exchanger. The results highlight a trade-off between model simplicity and transient performance. The Koopman-based MPC tends to achieve faster convergence and lower accumulated error during the transient phase, while the linear-model-based MPC provides smoother control inputs and more conservative behavior.

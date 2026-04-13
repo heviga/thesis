@@ -18,27 +18,6 @@
   doi     = {10.1016/S0967-0661(02)00186-7}
 }
 
-@article{mpc_mimo_process,
-  author  = {Morari, Manfred and Lee, Jay H.},
-  title   = {Model Predictive Control: Past, Present and Future},
-  journal = {Computers \& Chemical Engineering},
-  volume  = {23},
-  number  = {4--5},
-  pages   = {667--682},
-  year    = {1999},
-  doi     = {10.1016/S0098-1354(99)00014-6}
-}
-
-@article{koopman_mpc_review,
-  author  = {Peitz, Sebastian and Klus, Stefan},
-  title   = {Koopman Operator-Based Model Reduction for Control},
-  journal = {Automatica},
-  volume  = {106},
-  pages   = {184--194},
-  year    = {2019},
-  doi     = {10.1016/j.automatica.2019.04.050}
-}
-
 @book{rawlings_mpc,
   author    = {Rawlings, James B. and Mayne, David Q. and Diehl, Moritz},
   title     = {Model Predictive Control: Theory, Computation, and Design},
@@ -46,14 +25,6 @@
   year      = {2017},
   edition   = {2},
   url       = {https://www.nobhillpublishing.com/mpc/}
-}
-
-@book{strejc_book,
-  author    = {Strejc, V\'{a}clav},
-  title     = {State Space Theory of Discrete Linear Control},
-  publisher = {John Wiley \& Sons},
-  year      = {1981},
-  url       = {https://onlinelibrary.wiley.com/}
 }
 
 @article{morari1999,
@@ -89,6 +60,17 @@
   doi     = {10.1007/s11071-005-2824-x}
 }
 
+@article{williams2015,
+  author  = {Williams, Matthew O. and Kevrekidis, Ioannis G. and Rowley, Clarence W.},
+  title   = {A Data-Driven Approximation of the Koopman Operator: Extending Dynamic Mode Decomposition},
+  journal = {Journal of Nonlinear Science},
+  volume  = {25},
+  number  = {6},
+  pages   = {1307--1346},
+  year    = {2015},
+  doi     = {10.1007/s00332-015-9258-5}
+}
+
 @article{brunton2016,
   author  = {Brunton, Steven L. and Proctor, Joshua L. and Kutz, J. Nathan},
   title   = {Discovering Governing Equations from Data by Sparse Identification of Nonlinear Dynamical Systems},
@@ -110,65 +92,36 @@
   doi     = {10.1016/j.automatica.2018.03.050}
 }
 
-@article{williams2015,
-  author  = {Williams, Matthew O. and Kevrekidis, Ioannis G. and Rowley, Clarence W.},
-  title   = {A Data-Driven Approximation of the Koopman Operator: Extending Dynamic Mode Decomposition},
-  journal = {Journal of Nonlinear Science},
-  volume  = {25},
-  number  = {6},
-  pages   = {1307--1346},
-  year    = {2015},
-  doi     = {10.1007/s00332-015-9258-5}
+@article{koopman_mpc_review,
+  author  = {Peitz, Sebastian and Klus, Stefan},
+  title   = {Koopman Operator-Based Model Reduction for Control},
+  journal = {Automatica},
+  volume  = {106},
+  pages   = {184--194},
+  year    = {2019},
+  doi     = {10.1016/j.automatica.2019.04.050}
 }
 
-@article{kalman1960,
-  author  = {Kalman, Rudolf E.},
-  title   = {A New Approach to Linear Filtering and Prediction Problems},
-  journal = {Journal of Basic Engineering},
-  volume  = {82},
+@article{yeung2019learning,
+  author  = {Yeung, Enoch and Kundu, Soumya and Hodas, Nathaniel O.},
+  title   = {Learning Deep Neural Network Representations for Koopman Operators of Nonlinear Dynamical Systems},
+  journal = {Nature Communications},
+  volume  = {10},
   number  = {1},
-  pages   = {35--45},
-  year    = {1960},
-  doi     = {10.1115/1.3662552}
+  pages   = {1--10},
+  year    = {2019},
+  doi     = {10.1038/s41467-019-12023-5}
 }
 
-@article{powergrid_koopmanmpc,
-  author  = {Korda, Milan and Susuki, Yoshihiko and Mezi\'c, Igor},
-  title   = {Power grid transient stabilization using Koopman model predictive control},
-  journal = {IFAC-PapersOnLine},
-  volume  = {51},
-  number  = {28},
-  pages   = {297--302},
-  year    = {2018},
-  doi     = {10.1016/j.ifacol.2018.11.632}
-}
-
-@article{arbabi2018,
-  author  = {Arbabi, Hassan and Korda, Milan and Mezi\'c, Igor},
-  title   = {A data-driven Koopman model predictive control framework for nonlinear flows},
-  journal = {Journal of Fluid Mechanics},
-  volume  = {910},
-  pages   = {A24},
-  year    = {2021},
-  doi     = {10.1017/jfm.2020.1079}
-}
-
-@article{li2025_softrobot,
-  author  = {Li, Y. and Liu, Z.},
-  title   = {Data-driven predictive tracking control of soft robots: a Koopman-MPC framework integrated with variable structure reduced-order extended state observer and Kalman filter},
-  journal = {Nonlinear Dynamics},
-  volume  = {113},
-  pages   = {19023--19045},
-  year    = {2025},
-  doi     = {10.1007/s11071-025-11166-4}
-}
-
-@misc{vanegas2021,
-  author       = {Vanegas Arias, Sergio Mauricio},
-  title        = {Learning Nonlinear Model Predictive Controllers and Virtual Sensors with Koopman Operator Approximation},
-  howpublished = {Master's thesis, Politecnico di Milano},
-  year         = {2021},
-  url          = {https://www.politesi.polimi.it/retrieve/261adea9-3fc4-4062-bde8-4092a76e06fb/Executive_Summary_Koopman.pdf}
+@article{otto2019linearly,
+  author  = {Otto, Samuel E. and Rowley, Clarence W.},
+  title   = {Linearly Recurrent Autoencoder Networks for Learning Dynamics},
+  journal = {SIAM Journal on Applied Dynamical Systems},
+  volume  = {18},
+  number  = {1},
+  pages   = {558--593},
+  year    = {2019},
+  doi     = {10.1137/18M1190914}
 }
 
 @manual{armfield_pct23_manual,
@@ -190,12 +143,65 @@
   doi     = {10.1109/LCSYS.2022.3182912}
 }
 
+@article{goodfellow2016deep,
+  author  = {Goodfellow, Ian and Bengio, Yoshua and Courville, Aaron},
+  title   = {Deep Learning},
+  journal = {MIT Press},
+  year    = {2016},
+  url     = {https://www.deeplearningbook.org/}
+}
+
+@article{kingma2015adam,
+  author  = {Kingma, Diederik P. and Ba, Jimmy},
+  title   = {Adam: A Method for Stochastic Optimization},
+  journal = {International Conference on Learning Representations (ICLR)},
+  year    = {2015},
+  url     = {https://arxiv.org/abs/1412.6980}
+}
+
 @inproceedings{lofberg2004yalmip,
   author    = {Johan L{\"o}fberg},
   title     = {YALMIP: A Toolbox for Modeling and Optimization in {MATLAB}},
   booktitle = {Proceedings of the CACSD Conference},
   year      = {2004},
   url       = {https://yalmip.github.io/}
+}
+
+@article{benchmark_mpc2021,
+  author  = {Jones, Colin N. and Korda, Milan and others},
+  title   = {Benchmarking Advanced Model Predictive Control Strategies},
+  journal = {Annual Reviews in Control},
+  volume  = {51},
+  pages   = {317--329},
+  year    = {2021},
+  doi     = {10.1016/j.arcontrol.2021.09.005}
+}
+
+@article{kalman1960,
+  author  = {Kalman, Rudolf E.},
+  title   = {A New Approach to Linear Filtering and Prediction Problems},
+  journal = {Journal of Basic Engineering},
+  volume  = {82},
+  number  = {1},
+  pages   = {35--45},
+  year    = {1960},
+  doi     = {10.1115/1.3662552}
+}
+
+@article{astrom2010feedback,
+  author  = {Åström, Karl J. and Murray, Richard M.},
+  title   = {Feedback Systems: An Introduction for Scientists and Engineers},
+  journal = {Princeton University Press},
+  year    = {2010},
+  url     = {https://press.princeton.edu/books/hardcover/9780691169571/feedback-systems}
+}
+
+@article{miyashita2022koopman,
+  title   = {Koopman-Model Predictive Control with Signal Temporal Logic Specifications for Temperature Regulation of a Warm-Water Supply System},
+  author  = {Miyashita, Ryo and Susuki, Yoshihiko and Ishigame, Atsushi},
+  journal = {arXiv preprint arXiv:2207.04184},
+  year    = {2022},
+  url     = {https://arxiv.org/abs/2207.04184}
 }
 
 @article{chen2025koopman_tms,
@@ -207,11 +213,13 @@
   year    = {2025},
   doi     = {10.1016/j.conengprac.2025.106323}
 }
-
-@article{miyashita2022koopman,
-  title   = {Koopman-Model Predictive Control with Signal Temporal Logic Specifications for Temperature Regulation of a Warm-Water Supply System},
-  author  = {Miyashita, Ryo and Susuki, Yoshihiko and Ishigame, Atsushi},
-  journal = {arXiv preprint arXiv:2207.04184},
-  year    = {2022},
-  url     = {https://arxiv.org/abs/2207.04184}
+@article{cassamo2020koopman,
+  author  = {Cassamo, Nassir and van Wingerden, Jan-Willem},
+  title   = {On the Potential of Reduced Order Models for Wind Farm Control: A Koopman Dynamic Mode Decomposition Approach},
+  journal = {Energies},
+  volume  = {13},
+  number  = {24},
+  pages   = {6513},
+  year    = {2020},
+  doi     = {10.3390/en13246513}
 }
