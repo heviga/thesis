@@ -299,9 +299,10 @@ A representative example is shown in Figure~\ref{fig:cl_response45} for the init
 
 To evaluate the closed-loop performance, three metrics were considered: the root mean square error (RMSE), the integral of absolute error (IAE), and the closed-loop quadratic objective value. The IAE is defined as
 \begin{equation}
-\mathrm{IAE} = \sum_{k=1}^{N} \left| y(k) - y_{\mathrm{ref}} \right|,
+\mathrm{IAE} = \sum_{k=1}^{N} \left| y(k) - y_{\mathrm{ss}} \right|,
+\label{eq:iae}
 \end{equation}
-where $y(k)$ denotes the outlet temperature at time step $k$, $y_{\mathrm{ref}}$ is the reference operating point, and $N$ is the simulation horizon.
+where $y(k)$ denotes the outlet temperature at time step $k$, $y_{\mathrm{ss}}$ is the steady-state operating point, and $N$ is the simulation horizon.
 
 For the initial condition $T_0 = 45\,^{\circ}\mathrm{C}$, the Koopman MPC achieved $\mathrm{RMSE}=4.58\,^{\circ}\mathrm{C}$, $\mathrm{IAE}=358.28$, and $J_{\mathrm{CL}}=563.53$, whereas the MPC based on the linear model identified from the step response achieved $\mathrm{RMSE}=4.62\,^{\circ}\mathrm{C}$, $\mathrm{IAE}=380.57$, and $J_{\mathrm{CL}}=562.36$. Although the quadratic objective values are almost identical in this case, the Koopman MPC yields slightly smaller tracking errors in both RMSE and IAE.
 
@@ -353,7 +354,6 @@ All three performance metrics are summarized in Figure~\ref{fig:sim_metrics_summ
 \end{figure}
 
 
-
 \section{Experimental Results}
 \label{sec:experimental_results}
 
@@ -374,24 +374,31 @@ The only manipulated variable was the pump speed controlled by the MPC.
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=0.95\textwidth]{images/compare_cl_T0_62.png}
-\caption{Experimental closed-loop response and control input for the initial temperature $T_0 = 62,^{\circ}\mathrm{C}$.}
-\label{fig:cl_exp_T0_62}
+\includegraphics[width=0.95\textwidth]{images/compare_cl_T0_55.png}
+\caption{Experimental closed-loop response and control input for the initial temperature $T_0 = 55,^{\circ}\mathrm{C}$.}
+\label{fig:cl_exp_T0_55}
 \end{figure}
 
-Figure~\ref{fig:cl_exp_T0_62} shows the experimental closed-loop response for the case starting from
-$T_0 = 62,^{\circ}\mathrm{C}$.
-Both controllers regulate the outlet temperature towards the operating point with a small steady-state offset.
+Figure~\ref{fig:cl_exp_T0_55} shows the experimental closed-loop response for the case starting from
+$T_0 = 55,^{\circ}\mathrm{C}$.
+Both controllers regulate the outlet temperature towards the operating point and reach a stable steady-state region.
 
-At the beginning of the experiment, the Koopman MPC applies a more aggressive control action.
-For a short initial interval, the pump speed is driven close to its upper limit, which causes the outlet temperature to increase faster than in the linear MPC case.
-As a result, the Koopman MPC reaches a higher temperature earlier and remains closer to the reference during the transient.
-After this initial phase, the control input is reduced and both controllers operate in a similar range.
+At the beginning of the experiment, both controllers apply a strong control action close to the actuator limits.
+The Koopman MPC remains at the upper input constraint slightly longer and exhibits a more aggressive behavior, which leads to a small overshoot in the temperature.
+The linear MPC reduces the input earlier and follows a smoother trajectory towards the steady state.
 
-Over the full duration of the experiment, the Koopman MPC maintains smaller deviations from the reference.
-For $T_0 = 62,^{\circ}\mathrm{C}$, the RMSE is $0.597,^{\circ}\mathrm{C}$ for the Koopman MPC compared to
-$0.797,^{\circ}\mathrm{C}$ for the linear MPC.
-The corresponding IAE values are $159.4$ and $225.1$, respectively.
+In terms of performance metrics, both controllers achieve comparable results.
+For $T_0 = 55,^{\circ}\mathrm{C}$, the RMSE is $2.004,^{\circ}\mathrm{C}$ for the Koopman MPC and $1.872,^{\circ}\mathrm{C}$ for the linear MPC.
+The IAE values are $272.46$ and $296.91$, respectively.
+The objective function value is lower for the linear MPC, which corresponds to smoother control actions and smaller input variations.
+
+The differences can be related to the behavior of the real system.
+The heat exchanger exhibits nonlinearities and disturbances that are not fully captured by either model.
+The Koopman MPC tends to react more strongly when the temperature is below the expected value, which results in larger initial control actions and occasional overshoot.
+The linear MPC behaves more conservatively, which can lead to slightly lower RMSE but slower adjustment of the input.
+
+Overall, both controllers provide consistent and stable regulation of the system.
+The main differences are visible in the transient phase, particularly in the aggressiveness of the control input and the speed of convergence.
 
 \begin{figure}[!ht]
 \centering
@@ -403,15 +410,9 @@ The corresponding IAE values are $159.4$ and $225.1$, respectively.
 Figure~\ref{fig:exp_metrics} summarizes the experimental performance metrics for all tested initial conditions.
 The RMSE decreases as the initial temperature approaches the operating point and reaches its minimum in the interval
 $T_0 = 60$--$66,^{\circ}\mathrm{C}$ for both controllers.
-In this region, the Koopman MPC consistently achieves lower RMSE values.
-For example, at $T_0 = 60,^{\circ}\mathrm{C}$ the RMSE is $0.693,^{\circ}\mathrm{C}$ for the Koopman MPC and
-$0.723,^{\circ}\mathrm{C}$ for the linear MPC.
 
 The IAE shows a similar dependence on the initial condition.
 The lowest IAE values are obtained close to the operating point and increase as the initial temperature moves further away.
-Across all tested cases, the Koopman MPC yields lower IAE values, indicating smaller accumulated tracking error.
-At $T_0 = 55,^{\circ}\mathrm{C}$, the IAE is $272.5$ for the Koopman MPC and $296.9$ for the linear MPC, while at
-$T_0 = 68,^{\circ}\mathrm{C}$ the values increase to $203.8$ and $248.8$, respectively.
 
 Table~\ref{tab:performance_metrics_exp} summarizes the performance metrics for all tested initial temperatures.
 
@@ -447,69 +448,154 @@ RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ \\
 
 The objective function values are very similar for both controllers.
 In most cases, the linear MPC gives a slightly lower objective value, which can be explained by smoother control actions and smaller changes of the input.
-The Koopman MPC uses more aggressive input moves, mainly at the beginning of the run, which leads to faster regulation but also increases the contribution of the input term in the objective function.
+The Koopman MPC tends to use more aggressive input moves, especially at the beginning of the response.
 
 The differences between the Koopman MPC and the linear MPC follow the same trend as in simulation and the steady-state behavior of both controllers is similar.
-The most significant differences are observed at the beginning of the response. For the Koopman MPC, the first control move is sometimes more aggressive, leading to a larger initial input change.
+The most visible differences occur during the initial transient phase, where the Koopman MPC may produce larger initial input changes.
+
+
+
 
 
 
 \subsection{Transient Performance Evaluation}
 \label{sec:transient_evaluation}
 
-Many of the measured step responses reach a steady-state region before the full 300 s window. Therefore, we also focused on the transient phase of the response, which captures the dynamic behavior immediately after a change in operating conditions.
+Since many of the measured closed-loop responses enter a steady-state
+region before the end of the full $300$-sample experiment, we also focused separately on the evaluation
+of the transient phase. It's the time it takes for the output to get close to the steady-state. 
 
-The transient phase was defined using a settling-based criterion. The settling time was determined as the first time instant when the output enters a predefined band around the steady-state and remains within this band for at least $N_{\text{hold}} = 5$ consecutive samples. The settling band was selected based on the noise level observed in the identification data. The standard deviation of the measured output in locally steady-state regions was approximately $\sigma \approx 0.2^\circ$C, which resulted in a settling band of approximately $\pm 2\sigma \approx \pm 0.4^\circ$C.
+The end of the transient was determined as the first time instant when
+the output entered a small band around the target value and stayed inside
+this band for at least $N_{\mathrm{hold}} = 5$ consecutive samples. 
+The width of this band was selected based on the noise level observed in
+the measured data. From steady-state parts of the identification
+experiments, the temperature signal varied approximately within
+$\pm 0.2\,^\circ\mathrm{C}$. 
+Based on this observation, the band was set to twice this variation,
+resulting in a band of $\pm 0.4\,^\circ\mathrm{C}$ around the target value.
 
-For each experiment, the transient interval was defined from the initial condition until the detected settling time. The following performance metrics were evaluated over this interval:
+For each experiment, the transient interval was defined from the initial
+sample until this time. The following metrics were evaluated over this
+interval:
+
 \begin{itemize}
-\item Root Mean Square Error (RMSE),
-\item Integral of Absolute Error (IAE),
-\item Integral of Squared Error (ISE),
-\item Integral of Time-weighted Absolute Error (ITAE),
-\item Control energy $\sum u_k^2$.
+    \item settling time, defined as the first time instant at which the
+    output enters the settling band around the target value and remains
+    within this band for at least $N_{\mathrm{hold}} = 5$ consecutive samples,
+
+    \item integral of absolute error (IAE), defined according to
+    \eqref{eq:iae},
+
+    \item integral of squared error (ISE), defined as
+    \begin{equation}
+    \mathrm{ISE} = \sum_{k=1}^{N} \left( y(k) - y_{\mathrm{ss}} \right)^2,
+    \end{equation}
+
+    \item integral of time-weighted absolute error (ITAE), defined as
+    \begin{equation}
+    \mathrm{ITAE} = \sum_{k=1}^{N} k \cdot \left| y(k) - y_{\mathrm{ss}} \right|,
+    \end{equation}
+
+    \item transient objective value $J_{\mathrm{CL}}$, evaluated
+    according to \eqref{eq:closed_loop_cost}, where $N_{\mathrm{CL}}$
+    corresponds to the length of the transient phase, i.e., the time until
+    the settling condition is satisfied.
 \end{itemize}
 
-An example of the experimental closed-loop response is shown in Figure~\ref{fig:cl_exp_T0_60} for the initial temperature $T_0 = 60,^{\circ}\mathrm{C}$. The figure also indicates the detected settling instant for both controllers (vertical lines), which defines the end of the transient phase used in the evaluation.
+An example of the closed-loop response is shown in
+Figure~\ref{fig:cl_exp_T0_60} for the initial temperature
+$T_0 = 60\,^\circ\mathrm{C}$. The figure also indicates the detected
+settling instant for both controllers by vertical lines, which define the
+end of the transient interval used in the evaluation.
 
 \begin{figure}[!ht]
 \centering
 \includegraphics[width=\textwidth]{images/compare_cl_T0_60.png}
-\caption{Closed-loop response and control input for $T_0 = 60,^{\circ}\mathrm{C}$ with indicated settling time.}
+\caption{Closed-loop response and control input for $T_0 = 60\,^\circ\mathrm{C}$ with indicated settling time.}
 \label{fig:cl_exp_T0_60}
 \end{figure}
 
-From the output it can be seen that both controllers stabilize the temperature around the reference without oscillations. The shape of the response corresponds to real thermal behavior, where the temperature reacts gradually due to the inertia of the system.
+Both controllers
+bring the temperature close to the steady-state with a small steady-state error.
+The response comes from a real experiment executed sequentially, which result in small differences of the measured temperature.
+At the beginning, the Koopman MPC keeps the input at the upper limit a bit
+longer. Afterwards, it decreases the input less aggressively than the linear MPC. The linear-model-based MPC reduces the input sooner and more aggressively,
+and the temperature approaches the higher temperature steady-state more slowly. In this instance, the Koopman MPC leads
+to a faster approach toward the steady-state.
 
-At the beginning of the experiment, the Koopman MPC keeps the control input at the upper limit for a slightly longer time than the linear MPC. Despite this, the temperature does not increase faster and remains slightly lower than in previous experiments with the linear MPC. This reflects the real behavior of the system, where the same input does not always lead to the same temperature response.
 
-At the same time, both controllers adjust their control actions based on the measured output. When the temperature does not evolve as expected, the control input is adapted accordingly. This indicates that both approaches respond consistently to the observed process behavior.
+The evaluation was performed for six initial temperatures in the range of
+$55\,^\circ\mathrm{C}$ to $68\,^\circ\mathrm{C}$. The resulting transient
+metrics for each case are summarized in Table~\ref{tab:transient_per_T0}.
 
-The evaluation was performed for six different initial temperatures in the range $55^\circ$C to $68^\circ$C. Instead of presenting individual results for each experiment, the metrics were aggregated across all initial conditions. The resulting sums and mean values are summarized in Table~\ref{tab:transient_summary}.
-
-\begin{table}[htbp]
+\begin{table}[!t]
 \centering
-\caption{Transient performance metrics.}
-\label{tab:transient_summary}
-\begin{tabular}{c c c c c c c}
+\caption{Transient performance metrics for Koopman MPC and linear-model-based MPC evaluated for different initial temperatures.}
+\label{tab:transient_per_T0}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{c|ccccc|ccccc}
 \hline
-Controller & Metric & $T_s$ & RMSE & IAE & ISE & ITAE \\
+\multirow{2}{*}{$T_0$ [$^\circ$C]} &
+\multicolumn{5}{c|}{Koopman MPC} &
+\multicolumn{5}{c}{Linear-model-based MPC} \\
+&
+$T_s$ & IAE & ISE & ITAE & $J_{\mathrm{CL}}$ &
+$T_s$ & IAE & ISE & ITAE & $J_{\mathrm{CL}}$ \\
 \hline
-Koopman & Sum  & 322 & 12.31 & 567.52 & 2020.4 & 10652 \\
-Linear  & Sum  & 592 & 11.52 & 763.19 & 2110.2 & 41926 \\
-Koopman & Mean & 53.67 & 2.05 & 94.59 & 336.74 & 1775.4 \\
-Linear  & Mean & 98.67 & 1.92 & 127.20 & 351.69 & 6987.6 \\
+55 & 69 & 228.465 & 1189.917 & 4463.122  & 358.001 &
+65 & 208.862 & 1013.379 & 4075.616  & 304.534 \\
+58 & 59 & 135.638 & 465.967  & 2394.468  & 180.042 &
+75 & 173.925 & 612.048  & 3824.761  & 213.544 \\
+60 & 51 & 62.025  & 121.280  & 1004.806  & 60.724  &
+54 & 53.157  & 109.885  & 782.014   & 43.973 \\
+\rowcolor{gray!15}
+62 & 12 & 16.166  & 23.689   & 72.070    & 20.112  &
+299 & 225.071 & 190.701  & 31304.541 & 74.605 \\
+66 & 69 & 54.526  & 63.489   & 1362.098  & 38.671  &
+36 & 30.342  & 41.200   & 379.695   & 26.504 \\
+68 & 62 & 70.704  & 156.091  & 1355.801  & 78.220  &
+63 & 71.834  & 142.957  & 1558.893  & 78.319 \\
 \hline
-\end{tabular}
+\textbf{Mean} &
+53.67 & 94.59  & 336.74 & 1775.39 & 122.63 &
+98.67 & 127.20 & 351.69 & 6987.59 & 123.58 \\
+\textbf{Sum} &
+322 & 567.52 & 2020.43 & 10652.37 & 735.77 &
+592 & 763.19 & 2110.17 & 41925.52 & 741.48 \\
+\hline
+\end{tabular}%
+}
 \end{table}
 
-It should be noted that the reported metrics are not normalized by the length of the transient horizon. As a result, the integral-based metrics (IAE, ISE, ITAE) are directly influenced by the duration of the transient phase. This is important when comparing the two controllers, since longer settling times naturally lead to larger accumulated error values.
+The integral metrics (IAE, ISE, ITAE) are not
+normalized by the duration of the transient phase. Consequently, their values depend not
+only on the magnitude of the tracking error but also on the length of the transient phase.
+For this reason, these metrics should be
+interpreted in conjunction with the settling time.
 
-This effect was clearly visible for the initial condition $T_0 = 62^\circ$C, where the linear model required nearly $300$ samples to reach steady state, while the Koopman-based controller settled in only $12$ samples. Consequently, the accumulated metrics for the linear model become significantly larger, mainly due to the longer transient duration.
 
-Overall, both controllers achieve stable regulation of the outlet temperature across all tested initial conditions. The observed differences are primarily related to the transient behavior and the duration of the response, rather than fundamental differences in stability or feasibility of the control approach.
 
-    
+The results indicate that both controllers provide comparable transient
+performance; however, neither controller demonstrates uniformly superior performance across all initial
+conditions. Overall, the Koopman MPC achieves shorter settling times
+and lower accumulated error, especially in terms of IAE and ITAE. On average, the Koopman MPC achieves a substantially shorter settling time
+($53.67$ samples compared to $98.67$ samples) and lower mean IAE
+($94.59$ compared to $127.20$). The mean values of ISE and transient
+objective function are very similar for both controllers. 
+
+For illustration, take $T_0 = 62,^\circ\mathrm{C}$, where the Koopman MPC reaches the settling band after only $12$ samples, while the linear model-based MPC does not satisfy the settling condition until the end of the observation window. Consequently, the integral-based metrics for the linear MPC become considerably larger, primarily due to the longer transient duration.
+
+
+
+
+
+
+
+
+
+
+
     \newpage
     \section*{Conclusions}
     \label{sec:conclusions}

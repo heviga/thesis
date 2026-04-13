@@ -9,66 +9,7 @@ Model Predictive Control (MPC) is then presented as the main control strategy us
 The chapter also introduces the Kalman filter (KF), which is used for state estimation in both the Strejc-based and Koopman-based control schemes. 
 Finally, the complete Koopman-based MPC structure is described, combining the Koopman prediction model, state estimation, and constrained optimal control into a single control framework.
 
-\section{Linear Model Identified from Step Response}
-
-In this work, a simple linear model of the heat exchanger is obtained 
-from step-response experiments. The model serves as a baseline 
-approximation of the system dynamics and is primarily used for 
-comparison with the data-driven Koopman model.
-
-The identification is based on measured step-response data, where a step 
-change is applied to the input signal and the corresponding output 
-temperature response is recorded. From the shape of the measured response, 
-the system dynamics are approximated by a first-order linear model.
-
-The continuous-time transfer function of the model is expressed as
-\begin{equation}
-G(s) = \frac{K}{T s + 1},
-\end{equation}
-where $K$ denotes the steady-state gain and $T$ is the dominant time 
-constant of the system.
-
-The steady-state gain $K$ is determined from the ratio of the steady-state 
-change in the output to the applied step change in the input,
-\begin{equation}
-K = \frac{\Delta y_{\mathrm{ss}}}{\Delta u},
-\end{equation}
-where $\Delta u$ is the magnitude of the input step and 
-$\Delta y_{\mathrm{ss}}$ is the corresponding steady-state change in the output.
-
-The time constant $T$ characterizes the speed of the system response and 
-is defined as the time required for the output to reach approximately 
-$63.2\%$ of its final steady-state value after the input step is applied. 
-This value follows from the analytical step response of a first-order system 
-and can be estimated directly from the measured data as the time instant 
-at which
-\begin{equation}
-y(t) = y_0 + 0.632 \, \Delta y_{\mathrm{ss}},
-\end{equation}
-where $y_0$ is the initial output value before the step change.
-
-For the purpose of digital control design, the identified model is 
-converted into a discrete-time state-space representation. The resulting 
-model can be written as
-\begin{equation}
-x_{k+1} = A x_k + B u_k,
-\label{eq:strejc_state}
-\end{equation}
-\begin{equation}
-y_k = C x_k + D u_k,
-\end{equation}
-where $x_k \in \mathbb{R}$ represents the system state, $u_k \in \mathbb{R}$ 
-is the control input, and $y_k \in \mathbb{R}$ is the measured output 
-temperature. The matrices $A$, $B$, $C$, and $D$ are obtained from the 
-identified continuous-time model using discretization with a fixed 
-sampling time. In this work, the direct feedthrough term $D$ is assumed 
-to be zero.
-
-As a linear approximation identified from step-response data, the model 
-is valid mainly in the operating region where the experiment was 
-performed. Its accuracy may decrease when the system operates far from 
-this region or when nonlinear effects become significant.
-
+/;lk,mj
 
 \section{Koopman Operator}
 \label{sec:Koopman_operator}
