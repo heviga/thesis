@@ -169,13 +169,7 @@ The identified Koopman model was then evaluated in open loop on the available te
 
 The results indicate that the Koopman model achieves a slightly lower prediction error compared to the first-order model. The difference is relatively small, suggesting that both models capture the dominant system dynamics, while the Koopman model provides a marginal improvement by representing nonlinear effects.
 
-The identified matrices $A_{\mathcal K}$, $B_{\mathcal K}$, and $C_{\mathcal K}$ were extracted directly from the trained model parameters as
-\[
-A_{\mathcal K} = K.\mathrm{weight}, \qquad
-B_{\mathcal K} = f_u.\mathrm{weight}, \qquad
-C_{\mathcal K} = f_y^{-1}.\mathrm{weight},
-\]
-with $D_{\mathcal K}=0$, and are used in the following sections for Koopman-based MPC design and experimental evaluation on the PCT23 system.
+The identified matrices \(A_{\mathcal K}\), \(B_{\mathcal K}\), and \(C_{\mathcal K}\) were determined from the trained neural Koopman model as the linear operators describing, respectively, the state evolution in the lifted space, the effect of the control input, and the mapping from the lifted state back to the measured output. The direct feedthrough term was assumed to be zero, i.e., \(D_{\mathcal K}=0\). These matrices were then used in the subsequent Koopman-based MPC formulation and in the experimental evaluation carried out on the PCT23 heat exchanger system.
 
 For a direct visual comparison, Figure~\ref{fig:open_loop_compare} shows the measured test output alongside the open-loop predictions from both identified models. The linear model follows the dominant trend of the measured response well, while the Koopman model provides comparable predictive performance. The figure confirms that both models are suitable for subsequent controller design, although both accumulate prediction error over longer horizons.
 
