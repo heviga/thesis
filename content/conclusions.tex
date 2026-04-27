@@ -192,7 +192,7 @@ For a visual comparison, Figure~\ref{fig:open_loop_compare} shows the measured t
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{images/open_loop_model_comparison.png}
+    \includegraphics[width=0.9\textwidth]{images/open_loop_model_comparison.png}
     \caption{Open-loop comparison of the measured outlet temperature $T_4$ and the predicted outputs of the linear step-response model and the Koopman model on the test dataset.}
     \label{fig:open_loop_compare}
 \end{figure}
@@ -268,7 +268,7 @@ Closed-loop simulations were performed to compare the Koopman-based MPC and the 
 T_0 \in \{45,50,55,58,60,62,66,68\}\,^{\circ}\mathrm{C}.
 \]
 
-A nonlinear data-driven baseline model was used as the simulation plant. This model was identified using the NeuroMANCER framework in Python and represents outlet temperature dynamics in a lifted latent space. Unlike the simplified linear model used for comparison, the baseline model combines neural-network-based lifting and reconstruction with linear latent-state evolution, enabling a more accurate representation of nonlinear input–output behavior \cite{yeung2019learning, otto2019linearly}.
+A nonlinear data-driven baseline model was used as the simulation plant. This model was identified using the NeuroMANCER framework in Python and represented outlet temperature dynamics in a lifted latent space. The baseline model combines neural-network-based lifting and reconstruction with linear latent-state evolution, enabling a more accurate representation of nonlinear input–output behavior \cite{yeung2019learning, otto2019linearly}.
 
 The baseline model uses an encoder--decoder structure. The measured outlet temperature is mapped by an encoder neural network into a latent state vector $z^{\mathrm{b}}$. This latent vector contains 24 variables, which are used to represent the state of the process. The latent-state evolution is modeled by a linear operator, and the effect of the control input is included through a separate input mapping. A decoder neural network maps the latent state back to the predicted physical output.
 
@@ -284,11 +284,10 @@ where $z^{\mathrm{b}}_k$ denotes the lifted latent state of the baseline model a
 \end{equation}
 where $f^{\mathrm{b}}_{\mathrm{dec}}(\cdot)$ denotes the decoder network of the baseline model.
 
-For comparison, the second controller was constructed using a linear model identified from the step response. This model provides a simplified linear approximation of the process dynamics around the operating region and is used as the prediction model inside the corresponding MPC controller.
 
-It is important to note that these closed-loop simulations are primarily intended to verify that both predictive controllers can steer the simulated plant to the desired steady-state region in a stable and consistent manner. The simulation study serves mainly as a comparative validation of controller behavior on a common reference model, rather than an exact replication of the real experimental device \cite{benchmark_mpc2021}.
+It is important to note that these closed-loop simulations are primarily intended to verify that both predictive controllers can drive the simulated plant to the desired steady-state region in a stable and consistent manner. The simulation study serves mainly as a comparative validation of controller behavior on a common reference model, rather than an exact replication of the real experimental device.
 
-A representative example is shown in Figure~\ref{fig:cl_response45} for the initial temperature $T_0 = 45,^{\circ}\mathrm{C}$, i.e., for an initial condition significantly below the steady-state operating region. In this case, both controllers first apply a strong control action close to the actuator limit and then gradually reduce the input as the output approaches steady state. The responses confirm that both MPC formulations can steer the system from a large initial deviation toward the desired operating region. This case is used mainly to illustrate the controllers' stabilizing behavior and to confirm that the designed MPC schemes regulate the simulated plant to steady state, even under more demanding initial conditions.
+A representative example of the simulation is shown in Figure~\ref{fig:cl_response45} for the initial temperature $T_0 = 45,^{\circ}\mathrm{C}$, i.e., for an initial condition significantly below the steady-state operating region. In this case, both controllers first apply a strong control action at the actuator limit and then gradually reduce the input as the output approaches steady state. The responses show that both MPC formulations can regulate the system from a large initial deviation toward the steady-state. 
 
 \begin{figure}[!t]
     \centering
@@ -307,6 +306,8 @@ where $y(k)$ denotes the outlet temperature at time step $k$, $y_{\mathrm{ss}}$ 
 Each metric looks at a different piece of how the closed-loop system behaves. RMSE highlights big swings away from the steady-state—since the errors are squared, the metric puts more weight on large deviations. This helps when trying to determine how severe the prevailing transient errors are. IAE, on the other hand, tracks the total absolute error over the whole simulation. It is less influenced by isolated spikes, so it's useful for understanding not just how much, but how long the system strays from its target. Then, the closed-loop objective, $J_{\mathrm{CL}}$, is rooted in the quadratic criterion from the MPC setup. That combines both how far the system deviates and how much control effort it takes, giving a clear sense of the overall cost relative to the controller's target.
 
 For the initial condition $T_0 = 45\,^{\circ}\mathrm{C}$, the Koopman MPC achieved $\mathrm{RMSE}=4.58\,^{\circ}\mathrm{C}$, $\mathrm{IAE}=358.28$, and $J_{\mathrm{CL}}=563.53$, whereas the MPC based on the linear model identified from the step response achieved $\mathrm{RMSE}=4.62\,^{\circ}\mathrm{C}$, $\mathrm{IAE}=380.57$, and $J_{\mathrm{CL}}=562.36$. Although the quadratic objective values are almost identical in this case, the Koopman MPC yields slightly smaller tracking errors in both RMSE and IAE.
+
+When averaged over all tested initial conditions, the mean RMSE is $1.59\,^{\circ}\mathrm{C}$ for the Koopman MPC and $1.65\,^{\circ}\mathrm{C}$ for the linear-model-based MPC. The mean IAE values are $115.77$ and $130.41$, respectively. The mean closed-loop objective values are $131.37$ and $131.79$, which are nearly identical.
 
 Table~\ref{tab:performance_metrics} summarizes the results for all tested initial temperatures. For initial conditions close to the operating point, both controllers achieve very small tracking errors. As the initial temperature moves further from the reference, both RMSE and IAE increase, as expected due to larger transient deviations and stronger control action requirements.
 
@@ -338,15 +339,14 @@ Table~\ref{tab:performance_metrics} summarizes the results for all tested initia
     \end{tabular}
 \end{table}
 
-The three performance metrics exhibit very similar trends for both controllers. The RMSE and IAE values are smallest for initial temperatures near the operating point and increase for larger deviations from steady state. The objective function follows the same qualitative pattern.
+The same trend can be observed for both controllers. When the initial temperature is close to the operating point, the transient deviation is small and the RMSE and IAE values remain low. For larger initial deviations, the response takes longer to reach the steady-state region, which leads to higher accumulated errors. A similar trend is also reflected in the closed-loop objective value.
 
 The results do not indicate a strong dominance of one controller over the other across all operating conditions. However, the Koopman MPC achieves slightly lower RMSE across all tested initial temperatures and lower IAE in every case. This suggests that the Koopman-based prediction model provides a slightly better overall tracking quality on the considered simulation plant, even though the differences remain relatively small.
 
-When averaged over all tested initial conditions, the mean RMSE is $1.59\,^{\circ}\mathrm{C}$ for the Koopman MPC and $1.65\,^{\circ}\mathrm{C}$ for the linear-model-based MPC. The mean IAE values are $115.77$ and $130.41$, respectively. The mean closed-loop objective values are $131.37$ and $131.79$, which are nearly identical.
 
-Overall, both controllers provide very similar closed-loop performance, and both reliably regulate the simulated nonlinear baseline plant to the steady-state operating region. In this simulation study, the Koopman MPC achieves slightly lower average tracking error, both in RMSE and IAE, while the closed-loop objective remains practically the same across both approaches.
 
-All three performance metrics are summarized in Figure~\ref{fig:sim_metrics_summary}.
+
+All three performance metrics are also visualized in Figure~\ref{fig:sim_metrics_summary}.
 
 \begin{figure}[H]
     \centering
@@ -355,11 +355,7 @@ All three performance metrics are summarized in Figure~\ref{fig:sim_metrics_summ
     \label{fig:sim_metrics_summary}
 \end{figure}
 
-The results depend on the plant’s operating range. The heat exchanger’s slow thermal dynamics mean a simple linear step-response model already captures most of the system’s behavior. That’s why both MPC controllers—classic and Koopman—end up producing nearly the same closed-loop performance.
-
-Koopman MPC has a small advantage when it comes to RMSE and IAE. Its lifted approach does a better job accounting for nonlinearities, especially if you start farther from the usual operating point. Still, the difference is not significant, since all the tested scenarios stick close enough to the normal range, where linear models hold up.
-
-Both controllers land on nearly identical closed-loop objective values. They use the same MPC setup—same constraints, horizon, and weights. The objective function penalizes tracking errors and control effort, so even if the Koopman controller tracks a bit better, it hardly moves $J_{\mathrm{CL}}$ downward.
+From these results we can say that they depend on the plant's operating range. The heat exchanger's slow thermal dynamics mean a simple linear step-response model already captures most of the system's behavior. That's why both MPC controllers, classic and Koopman, end up producing nearly the same closed-loop performance. The controllers also use the same MPC setup—same constraints, horizon, and weights. The objective function penalizes tracking errors and control effort, so even if the Koopman controller tracks a bit better, it hardly moves $J_{\mathrm{CL}}$ downward.
 
 
 \section{Experimental Results}
