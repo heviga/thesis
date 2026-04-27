@@ -4,6 +4,7 @@
 This chapter presents the practical implementation of modeling and control strategies for a plate heat exchanger, specifically utilizing the Armfield Process Plant Trainer PCT23 \cite{armfield_pct23_manual}. It details the procedures for system identification, controller design, and performance evaluation through both simulation and real-time experimentation. The approach throughout closely follows established practices in process control \cite{ljung_sysid, rawlings_mpc}, while adapting recent data-driven modeling techniques where appropriate.
 
 \section{The Plate Heat Exchanger}
+\label{sec:practical_introduction}
 The Armfield PCT23 is a laboratory-scale plate heat exchanger with two hydraulically separated circuits: a hot-fluid circuit and a cold-fluid circuit. Heat transfer between the two media takes place in the plate heat exchanger, while the overall process dynamics are influenced by the flow rates and inlet temperatures of both circuits. The system exhibits slow dynamics and nonlinear behavior typical of thermal processes.
 
 \begin{figure}[htbp]
@@ -368,7 +369,7 @@ The experiments were initialized at different outlet temperatures.
 Before each MPC run, the desired starting temperature was achieved using a PI controller acting on the pump speed.
 
 Regulation was performed to zero in normalized coordinates.
-The corresponding reference temperature $x_{\text{target}} = 63.808,^{\circ}\mathrm{C}$ was computed from the measured steady-state mean obtained during the experimental day.
+The corresponding reference temperature $x_{\text{target}} = 63.808^{\circ}\mathrm{C}$ was computed from the measured steady-state mean obtained during the experimental day.
 This value is consistent with the input mean $u_{\text{mean}}$ used during identification, but it does not correspond to the mean of the identification dataset itself.
 The prediction horizon, cost function weights, constraints, and Kalman filter parameters were kept identical for both controllers, so that only the difference between the prediction models is compared.
 
@@ -450,14 +451,15 @@ RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ \\
 \end{tabular}
 \end{table}
 
-The objective function values are very similar for both controllers.
-In most cases, the linear MPC yields a slightly lower objective value, which can be attributed to smoother control actions and smaller input changes.
-The Koopman MPC tends to use more aggressive input moves, especially at the beginning of the response.
-
-The differences between the Koopman MPC and the linear MPC follow the same trend as in simulation, and both controllers exhibit similar steady-state behavior.
-The most visible differences occur during the initial transient phase, where the Koopman MPC may produce larger initial input changes.
 
 
+The experimental results can be explained by the different properties of the two prediction models and by the behavior of the real heat exchanger. The real system contains nonlinear heat-transfer effects, measurement noise, actuator limitations, and small disturbances from the hydraulic and thermal circuits. These effects are not captured perfectly by either prediction model, which explains why the experimental responses differ more than the simulation responses.
+
+Koopman MPC usually achieves a lower IAE because its lifted prediction model captures the process's transient nonlinear behavior more accurately. This helps the controller lower the tracking error throughout the experiment. At the same time, this property makes the Koopman controller react more quickly to any deviation from the operating point. So, if the measured temperature drops below the steady-state target, the controller pushes a stronger input and tends to stay near the actuator limit longer. The error drops quickly, but that same aggressiveness can lead to overshoot and sometimes a slightly higher RMSE, like in the case where $T_0 = 55\,^{\circ}\mathrm{C}$.
+
+Linear MPC, on the other hand, uses a first-order model based on averaged step responses, so it mainly tracks the dominant slow thermal dynamics of the heat exchanger. This makes the control response smoother and more cautious, especially during the early transient phase. Because the closed-loop cost penalizes input effort, the linear MPC can sometimes deliver a lower overall cost. But its slower temperature correction increases the accumulated error, leading to higher IAE values for most starting conditions.
+
+Overall, experiments show that Koopman MPC does a better job of minimizing accumulated tracking error, while linear MPC generally gives smoother control moves. The real difference stands out during the transient phase, when nonlinear effects and model mismatch matter most. Once the system settles near steady-state, both models represent the process well enough, so the two controllers behave similarly.
 
 
 
