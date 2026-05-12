@@ -100,6 +100,10 @@ template},urlcolor=blue]{hyperref}
 \RequirePackage{enumitem}
 \titlespacing{\section}{0pt}{\parskip+6pt}{-\parskip+6pt}
 \titlespacing{\subsection}{0pt}{\parskip}{-\parskip+4pt}
+\usepackage{tikz}
+\usetikzlibrary{matrix,positioning,arrows.meta}
+\usepackage{graphicx}
+
 %----------------------------------------------------------------%
 
 %----------------------------------------------------------------%

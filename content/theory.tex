@@ -16,11 +16,19 @@ Finally, the complete Koopman-based MPC structure is described, combining the Ko
 The Koopman operator framework provides a data-driven approach for modeling nonlinear dynamical systems using linear representations in an augmented state space.
 Instead of directly modeling the system state's nonlinear evolution, the Koopman approach maps the measured variables into a higher-dimensional space, where the system dynamics can be approximated as linear.
 
-Consider a discrete-time nonlinear system described by
+Consider first an autonomous discrete-time nonlinear system described by
 \begin{equation}
 x_{k+1} = f(x_k),
+\label{eq:autonomous_nonlinear_system}
 \end{equation}
 where $f$ represents a generally nonlinear function describing the system dynamics.
+
+For controlled systems, the dynamics can be written more generally as
+\begin{equation}
+x_{k+1} = f(x_k, u_k),
+\label{eq:controlled_nonlinear_system}
+\end{equation}
+where $u_k$ denotes the control input. In this work, the control input is included later in the finite-dimensional lifted model through the input matrix $B_{\mathcal{K}}$.
 
 The Koopman operator $\mathcal{K}$ is defined as a linear operator acting on functions of the system state. 
 For a lifting function $g(\cdot)$, it satisfies
@@ -46,7 +54,7 @@ where $n_u$ and $n_y$ denote the dimensions of the input and output, respectivel
 For example, a system with a single measured state ($n_x = 1$), may be lifted to a state vector of dimension $n_z = 10$ by including nonlinear features of the measured temperature and input signal. This results in a Koopman model with matrices $A_{\mathcal{K}} \in \mathbb{R}^{10 \times 10}$ and $B_{\mathcal{K}} \in \mathbb{R}^{10 \times 1}$, while preserving a linear structure suitable for prediction and control.
 Selecting the lifted state dimension involves a trade-off between model accuracy and computational complexity. In practice, the dimension $n_z$ is determined by the chosen lifting function and identification method and is typically selected based on empirical performance and computational considerations \cite{korda2018}.
 
-In the lifted space, the system dynamics can be approximated by a linear model of the form
+In the lifted space, the system dynamics can be approximated by a linear model suitable for prediction and control~\cite{korda2018} of the form
 \begin{equation}
 z_{k+1} = A_{\mathcal{K}} z_k + B_{\mathcal{K}} u_k,
 \label{eq:koopman_state}
@@ -56,9 +64,12 @@ z_{k+1} = A_{\mathcal{K}} z_k + B_{\mathcal{K}} u_k,
 \label{eq:koopman_output}
 \end{equation}
 
-A commonly used method for approximating the Koopman operator from data is the Extended Dynamic Mode Decomposition (EDMD), which constructs a finite-dimensional approximation using a predefined set of basis functions. However, the performance of EDMD depends strongly on the choice of these basis functions.
+A commonly used method for approximating the Koopman operator from data is the Extended Dynamic Mode Decomposition (EDMD), which constructs a finite-dimensional approximation using a predefined set of basis functions. However, the performance of EDMD depends strongly on the choice of these basis functions~\cite{williams2015edmd}. However, the performance of EDMD depends strongly on the choice of these basis functions.
 
-In this work, a Deep Koopman approach is used instead, where the lifting function is learned directly from data using a neural network. This allows the lifting transformation to adapt automatically to the system dynamics without requiring manual selection of basis functions.
+\section{Deep Koopman}
+\label{sec:deep_koopman}
+
+In this work, a Deep Koopman approach is used instead, where the lifting function is learned directly from data using a neural network~\cite{lusch2018deep,yeung2019learning,otto2019linearly}. This allows the lifting transformation to adapt automatically to the system dynamics without requiring manual selection of basis functions.
 
 The Deep Koopman model used in this work follows an encoder--linear dynamics--decoder structure. The lifting transformation is implemented as
 \begin{equation}
@@ -67,14 +78,180 @@ z_k = f_y(y_k),
 \end{equation}
 where $f_y(\cdot)$ is a trainable mapping.
 
+Figures~\ref{fig:encoder_network} and~\ref{fig:decoder_network} show a schematic example of the encoder and decoder architecture used in this work. In the implemented model, the encoder maps the measured output $y_k$ to a lifted state $z_k \in \mathbb{R}^{10}$ by means of a fully connected neural network with three hidden layers of 60 neurons each. The decoder then maps the lifted state back to the predicted output.
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\linewidth}{!}{%
+    \begin{tikzpicture}[
+        >=Latex,
+        plain/.style={
+            draw=none,
+            fill=none,
+            inner sep=0pt,
+            minimum size=0pt
+        },
+        neuron/.style={
+            draw,
+            circle,
+            minimum size=7mm,
+            inner sep=0pt
+        },
+        dot/.style={
+            draw,
+            circle,
+            fill=black,
+            minimum size=1mm,
+            inner sep=0pt
+        },
+        net/.style={
+            matrix of nodes,
+            nodes in empty cells,
+            ampersand replacement=\&,
+            column sep=12mm,
+            row sep=2mm
+        }
+    ]
+    
+    \matrix[net] (mat) {
+    |[plain]| \parbox{1.7cm}{\centering Input}
+    \& |[plain]| \parbox{2.0cm}{\centering (60 neurons)}
+    \& |[plain]| \parbox{2.0cm}{\centering (60 neurons)}
+    \& |[plain]| \parbox{2.0cm}{\centering (60 neurons)}
+    \& |[plain]| \parbox{2.0cm}{\centering (10 neurons)} \\
+    
+     \& |[neuron]| \& |[neuron]| \& |[neuron]| \& |[plain]|  \\
+    |[plain]|  \& |[plain]|  \& |[plain]|  \& |[plain]|  \& |[plain]|  \\
+    |[plain]|  \& |[neuron]| \& |[neuron]| \& |[neuron]| \& |[neuron]| \\
+    |[plain]|  \& |[plain]|  \& |[plain]|  \& |[plain]|  \& |[plain]|  \\
+    |[plain]|  \& |[dot]|    \& |[dot]|    \& |[dot]|    \& |[neuron]| \\
+    |[plain]|  \& |[dot]|    \& |[dot]|    \& |[dot]|    \& |[dot]|    \\
+    |[neuron]| \& |[neuron]| \& |[neuron]| \& |[neuron]| \& |[dot]|    \\
+    |[plain]|  \& |[plain]|  \& |[plain]|  \& |[plain]|  \& |[plain]|  \\
+    |[plain]|  \& |[neuron]| \& |[neuron]| \& |[neuron]| \& |[neuron]| \\
+    |[plain]|  \& |[plain]|  \& |[plain]|  \& |[plain]|  \& |[plain]|  \\
+    |[plain]|  \& |[neuron]| \& |[neuron]| \& |[neuron]| \& |[plain]|  \\
+    };
+    
+    % input arrow
+    \draw[->] ([xshift=-12mm]mat-8-1.west) -- (mat-8-1.west)
+    node[midway, above] {$y_k$};
+    
+    % input -> hidden layer 1
+    \foreach \r in {2,4,8,10,12}{
+        \draw[->, gray!65] (mat-8-1) -- (mat-\r-2);
+    }
+    
+    % hidden layer 1 -> hidden layer 2
+    \foreach \r in {2,4,8,10,12}{
+        \foreach \s in {2,4,8,10,12}{
+            \draw[->, gray!45] (mat-\r-2) -- (mat-\s-3);
+        }
+    }
+    
+    % hidden layer 2 -> hidden layer 3
+    \foreach \r in {2,4,8,10,12}{
+        \foreach \s in {2,4,8,10,12}{
+            \draw[->, gray!45] (mat-\r-3) -- (mat-\s-4);
+        }
+    }
+    
+    % hidden layer 3 -> latent layer
+    \foreach \r in {2,4,8,10,12}{
+        \foreach \s in {4,6,10}{
+            \draw[->, gray!45] (mat-\r-4) -- (mat-\s-5);
+        }
+    }
+    
+    % labels on right of latent layer
+    \node[right=6mm of mat-4-5] {$z_1$};
+    \node[right=6mm of mat-6-5] {$z_2$};
+    \node[right=10mm of mat-7-5] {$\vdots$};
+    \node[right=6mm of mat-10-5] {$z_{10}$};
+    
+    \end{tikzpicture}%
+    }
+    \caption{Schematic example of the encoder architecture used in this work. The measured output $y_k$ is mapped by a fully connected neural network with three hidden layers of 60 neurons each into a 10-dimensional latent state $z_k$.}
+    \label{fig:encoder_network}
+\end{figure}
+
 The predicted output is obtained using a decoder
 \begin{equation}
 \hat{y}_k = f_{\mathrm{dec}}(z_k).
 \label{eq:koopman_decoder}
 \end{equation}
-In the implemented Deep Koopman model, this mapping is represented by a linear decoder, which corresponds directly to the matrix $C_{\mathcal{K}}$, while $A_{\mathcal{K}}$ and $B_{\mathcal{K}}$ in Equation \ref{eq:koopman_state} represent the finite-dimensional approximation of the Koopman dynamics and the influence of the control input in the lifted space, respectively.
 
-All components of the model, including the encoder, Koopman operator $K$, and decoder, are identified simultaneously from data by minimizing a multi-step prediction error over measured trajectories.
+In the present implementation, the decoder is linear, which means that the lifted state is mapped directly to the predicted output by a linear transformation.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        >=Latex,
+        plain/.style={
+            draw=none,
+            fill=none,
+            inner sep=0pt,
+            minimum size=0pt
+        },
+        neuron/.style={
+            draw,
+            circle,
+            minimum size=7mm,
+            inner sep=0pt
+        },
+        dot/.style={
+            draw,
+            circle,
+            fill=black,
+            minimum size=1mm,
+            inner sep=0pt
+        },
+        net/.style={
+            matrix of nodes,
+            nodes in empty cells,
+            column sep=18mm,
+            row sep=2mm
+        }
+    ]
+    
+    \matrix[net] (mat) {
+    |[plain]| \parbox{2.0cm}{\centering (10 neurons)} &
+    |[plain]| \parbox{1.8cm}{\centering Output} \\
+    
+     & |[plain]|  \\
+    |[plain]|  & |[plain]|  \\
+    |[neuron]| & |[plain]|  \\
+    |[plain]|  & |[plain]|  \\
+    |[dot]|    & |[plain]|  \\
+    |[dot]|    & |[plain]|  \\
+    |[neuron]| & |[neuron]| \\
+    |[plain]|  & |[plain]|  \\
+    |[neuron]| & |[plain]|  \\
+    };
+    
+    % connections latent -> output
+    \foreach \r in {4,8,10}{
+        \draw[->, gray!45] (mat-\r-1) -- (mat-8-2);
+    }
+    
+    % labels on left of latent layer
+    \node[left=3mm of mat-4-1] {$z_1$};
+    \node[left=6mm of mat-6-1] {$z_2$};
+    \node[left=3mm of mat-8-1] {$\vdots$};
+    \node[left=2mm of mat-10-1] {$z_{10}$};
+    
+    % output arrow
+    \draw[->] (mat-8-2.east) -- ([xshift=12mm]mat-8-2.east)
+    node[midway, above] {$\hat{y}_k$};
+    
+    \end{tikzpicture}
+    \caption{Schematic example of the decoder architecture used in this work. The 10-dimensional lifted state is mapped linearly to the predicted outlet temperature $\hat{y}_k$.}
+    \label{fig:decoder_network}
+\end{figure}
+
+In the implemented Deep Koopman model, this mapping is represented by a linear decoder, which corresponds directly to the matrix $C_{\mathcal{K}}$. The matrices $A_{\mathcal{K}}$ and $B_{\mathcal{K}}$ in Equation~\eqref{eq:koopman_state} represent the finite-dimensional approximation of the Koopman dynamics and the influence of the control input in the lifted space, respectively.
+
+All components of the model, including the encoder, the lifted linear dynamics, and the decoder, are identified simultaneously from data by minimizing a multi-step prediction error over measured trajectories.
 
 The identification is performed using the Neuromancer framework, which formulates the problem as a structured optimization task and enables efficient gradient-based training.
 
@@ -105,10 +282,10 @@ To accurately capture system dynamics over a prediction horizon, the model is tr
 The main loss term is the multi-step output prediction error
 \begin{equation}
 \mathcal{L}_{y} =
-\sum_{k=1}^{N}
+\sum_{k=1}^{N_{\mathrm{p}}}
 \left\| y_k - \hat{y}_k \right\|_2^2,
 \end{equation}
-which penalizes deviations between measured and predicted outputs over the full horizon.
+which penalizes deviations between measured and predicted outputs over the full prediction horizon $N_{\mathrm{p}}$ used during training.
 
 In addition, a one-step prediction loss is included
 \begin{equation}
@@ -119,10 +296,10 @@ to improve local prediction accuracy.
 
 To ensure consistency between the lifted linear dynamics and the encoded states, a latent-space loss is introduced
 \begin{equation}
-\mathcal{L}_{x} =
-\sum_{k=1}^{N}
-\left\| z_k^{\text{enc}} - z_k^{\text{pred}} \right\|_2^2,
-\end{equation}
+    \mathcal{L}_{x} =
+    \sum_{k=1}^{N_{\mathrm{p}}}
+    \left\| z_k^{\mathrm{enc}} - z_k^{\mathrm{pred}} \right\|_2^2,
+    \end{equation}
 where $z_k^{\text{enc}}$ denotes the encoded lifted state and $z_k^{\text{pred}}$ is obtained from the linear Koopman dynamics.
 
 A reconstruction loss is also included to ensure that the encoder--decoder pair preserves the original measurements
@@ -209,7 +386,23 @@ y_k = C x_k + D u_k,
 \end{equation}
 where $x_k \in \mathbb{R}^n$ denotes the system state vector, $u_k \in \mathbb{R}^m$ is the control input, and $y_k \in \mathbb{R}^p$ is the system output. The matrices $A$, $B$, $C$, and $D$ describe the discrete-time prediction model. In many thermal systems, including the system considered in this work, the direct feedthrough term $D$ is zero or negligible.
 
+For the linear-model-based MPC, the prediction model was obtained from a first-order step-response model. The continuous-time transfer function can be written as
+\begin{equation}
+G(s) = \frac{K}{\tau s + 1},
+\label{eq:first_order_transfer}
+\end{equation}
+where $K$ is the steady-state gain and $\tau$ is the time constant. Using zero-order-hold discretization with sampling period $\Ts$, the corresponding discrete-time state-space model is obtained as
+\begin{equation}
+A = e^{-\Ts/\tau}, \qquad
+B = K\left(1 - e^{-\Ts/\tau}\right), \qquad
+C = 1, \qquad
+D = 0.
+\label{eq:first_order_discrete_matrices}
+\end{equation}
+These matrices define the prediction model used by the MPC controller based on the linear step-response approximation.
+
 The control objective is to regulate to a steady-state operating point. This objective is expressed through a quadratic cost function that penalizes deviations of the predicted output from zero and excessive control effort. The MPC optimization problem solved at each sampling instant is given by
+
 
     
     \begin{equation}
@@ -248,7 +441,7 @@ This MPC formulation is used consistently for both the linear-based and Koopman-
 \section{Koopman-Based Model Predictive Control}
 
 Koopman-based Model Predictive Control (Koopman MPC) combines the standard linear MPC framework with a data-driven Koopman model and a Kalman filter for state estimation. 
-In contrast to the classical MPC based on a first-order model, the prediction model in Koopman MPC is formulated in the lifted state space introduced in Section~\ref{sec:Koopman_operator}. 
+In contrast to the classical MPC based on a first-order model, the prediction model in Koopman MPC is formulated in the lifted state space introduced in Section~\ref{sec:deep_koopman}. 
 The lifted-state dynamics and output mapping given by equations~\eqref{eq:koopman_state} and~\eqref{eq:koopman_output} are directly used within the MPC prediction scheme \cite{korda2018,koopman_mpc_review}.
 
 From the MPC perspective, the Koopman-based prediction model is treated as a standard linear state-space model.

@@ -84,12 +84,17 @@ K \approx 1.17, \qquad \tau \approx 68~\mathrm{samples}.
 \label{eq:strejc_identified_parameters}
 \end{equation}
 
-With a sampling period of $T_s = 1~\mathrm{s}$, the continuous-time model was converted into a discrete-time state-space representation. For a first-order system, the discrete-time coefficients are given by
+With the sampling period $T_s = 1~\mathrm{s}$, the identified parameters were substituted into the discrete-time state-space form given in Equation~\eqref{eq:first_order_discrete_matrices}. This yields
 \begin{equation}
-A = e^{-T_s/\tau}, \qquad
-B = K \left(1 - e^{-T_s/\tau}\right), \qquad
-C = 1, \qquad
-D = 0.
+A = 0.985, \qquad B = 0.016, \qquad C = 1, \qquad D = 0.
+\label{eq:strejc_discrete_matrices}
+\end{equation}
+The resulting discrete-time prediction model is therefore
+\begin{equation}
+x_{k+1} = 0.985\,x_k + 0.016\,u_k,
+\qquad
+y_k = x_k.
+\label{eq:strejc_discrete_model}
 \end{equation}
 
 Substituting the identified parameters into the discrete-time model introduced in equation~\eqref{eq:strejc_state} and \eqref{eq:strejc_state2} yields the following representation:
@@ -526,45 +531,43 @@ to a faster approach toward the steady-state.
 The evaluation was performed for six initial temperatures in the range
 $T_0 \in [55, 68]\,^\circ\mathrm{C}$. The resulting transient metrics for each case are summarized in Table~\ref{tab:transient_per_T0}, and is also visualized in Figure~\ref{fig:transient_metrics_summary}. 
 
-
 \begin{table}[!t]
-\centering
-\caption{Transient performance metrics for Koopman MPC and linear-model-based MPC evaluated for different initial temperatures.}
-\label{tab:transient_per_T0}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{c|ccccc|ccccc}
-\hline
-\multirow{2}{*}{$T_0$ [$^\circ$C]} &
-\multicolumn{5}{c|}{Koopman MPC} &
-\multicolumn{5}{c}{Linear MPC} \\
-&
-$T_s$ & IAE & ISE & ITAE & $J_{\mathrm{CL}}$ &
-$T_s$ & IAE & ISE & ITAE & $J_{\mathrm{CL}}$ \\
-\hline
-55 & 69 & 228.465 & 1189.917 & 4463.122  & 358.001 &
-65 & 208.862 & 1013.379 & 4075.616  & 304.534 \\
-58 & 59 & 135.638 & 465.967  & 2394.468  & 180.042 &
-75 & 173.925 & 612.048  & 3824.761  & 213.544 \\
-60 & 51 & 62.025  & 121.280  & 1004.806  & 60.724  &
-54 & 53.157  & 109.885  & 782.014   & 43.973 \\
-% \rowcolor{gray!15}
-62 & 12 & 16.166  & 23.689   & 72.070    & 20.112  &
-299 & 225.071 & 190.701  & 31304.541 & 74.605 \\
-66 & 69 & 54.526  & 63.489   & 1362.098  & 38.671  &
-36 & 30.342  & 41.200   & 379.695   & 26.504 \\
-68 & 62 & 70.704  & 156.091  & 1355.801  & 78.220  &
-63 & 71.834  & 142.957  & 1558.893  & 78.319 \\
-\hline
-\textbf{Mean} &
-53.67 & 94.59  & 336.74 & 1775.39 & 122.63 &
-98.67 & 127.20 & 351.69 & 6987.59 & 123.58 \\
-\textbf{Sum} &
-322 & 567.52 & 2020.43 & 10652.37 & 735.77 &
-592 & 763.19 & 2110.17 & 41925.52 & 741.48 \\
-\hline
-\end{tabular}%
-}
-\end{table}
+    \centering
+    \caption{Transient performance metrics for Koopman MPC and linear-model-based MPC evaluated for different initial temperatures.}
+    \label{tab:transient_per_T0}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{c|ccccc|ccccc}
+    \hline
+    \multirow{2}{*}{$T_0$ [$^\circ$C]} &
+    \multicolumn{5}{c|}{Koopman MPC} &
+    \multicolumn{5}{c}{Linear MPC} \\
+    &
+    $T_s$ & IAE & ISE & ITAE & $J_{\mathrm{CL}}$ &
+    $T_s$ & IAE & ISE & ITAE & $J_{\mathrm{CL}}$ \\
+    \hline
+    55 & 69 & 228.47 & 1189.92 & 4463.12  & 358.00 &
+    65 & 208.86 & 1013.38 & 4075.62  & 304.53 \\
+    58 & 59 & 135.64 & 465.97  & 2394.47  & 180.04 &
+    75 & 173.93 & 612.05  & 3824.76  & 213.54 \\
+    60 & 51 & 62.03  & 121.28  & 1004.81  & 60.72  &
+    54 & 53.16  & 109.89  & 782.01   & 43.97  \\
+    62 & 12 & 16.17  & 23.69   & 72.07    & 20.11  &
+    299 & 225.07 & 190.70  & 31304.54 & 74.61  \\
+    66 & 69 & 54.53  & 63.49   & 1362.10  & 38.67  &
+    36 & 30.34  & 41.20   & 379.70   & 26.50  \\
+    68 & 62 & 70.70  & 156.09  & 1355.80  & 78.22  &
+    63 & 71.83  & 142.96  & 1558.89  & 78.32  \\
+    \hline
+    \textbf{Mean} &
+    53.67 & 94.59  & 336.74 & 1775.39 & 122.63 &
+    98.67 & 127.20 & 351.69 & 6987.59 & 123.58 \\
+    \textbf{Sum} &
+    322 & 567.52 & 2020.43 & 10652.37 & 735.77 &
+    592 & 763.19 & 2110.17 & 41925.52 & 741.48 \\
+    \hline
+    \end{tabular}%
+    }
+    \end{table}
 
 The integral metrics (IAE, ISE, ITAE) are not
 normalized by the duration of the transient phase. Consequently, their values depend not
