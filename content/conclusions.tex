@@ -519,14 +519,30 @@ end of the transient interval used in the evaluation.
 \label{fig:cl_exp_T0_60}
 \end{figure}
 
-Both controllers
-bring the temperature close to the steady-state with a small steady-state error.
-The response comes from a real experiment executed sequentially, which results in small differences in the measured temperature.
-At the beginning, the Koopman MPC keeps the input at the upper limit a bit
-longer. Afterward, it decreases the input less aggressively than the linear MPC. The linear-model-based MPC reduces the input sooner and more aggressively,
-and the temperature approaches the higher temperature steady-state more slowly. In this instance, the Koopman MPC leads
-to a faster approach toward the steady-state.
+For a clearer illustration of the evaluated interval, a zoomed view of the
+transient phase for the same experiment is shown in
+Figure~\ref{fig:cl_exp_T0_60_transient}. This figure presents the
+approximated course of the transient phase as defined in this work for the
+initial temperature $T_0 = 60\,^\circ\mathrm{C}$.
 
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\textwidth]{images/compare_cl_T0_60_cropped_settling.png}
+\caption{Zoomed view of the transient phase for $T_0 = 60\,^\circ\mathrm{C}$. The vertical lines indicate the detected settling instants used to define the end of the transient interval for both controllers.}
+\label{fig:cl_exp_T0_60_transient}
+\end{figure}
+
+Both controllers bring the temperature close to the steady-state with a
+small steady-state error. The response comes from a real experiment executed
+sequentially, which results in small differences in the measured
+temperature. As can be seen in
+Figures~\ref{fig:cl_exp_T0_60} and~\ref{fig:cl_exp_T0_60_transient}, the
+Koopman MPC keeps the input at the upper constraint for a longer time at
+the beginning of the response. Afterward, it reduces the input more
+smoothly, while the linear-model-based MPC starts decreasing the input
+earlier and does so more aggressively. As a result, the temperature under
+the Koopman MPC approaches the steady-state little faster in this
+experiment.
 
 The evaluation was performed for six initial temperatures in the range
 $T_0 \in [55, 68]\,^\circ\mathrm{C}$. The resulting transient metrics for each case are summarized in Table~\ref{tab:transient_per_T0}, and is also visualized in Figure~\ref{fig:transient_metrics_summary}. 
