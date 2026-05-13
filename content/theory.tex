@@ -440,12 +440,12 @@ This MPC formulation is used consistently for both the linear-based and Koopman-
 
 \section{Koopman-Based Model Predictive Control}
 
-Koopman-based Model Predictive Control (Koopman MPC) combines the standard linear MPC framework with a data-driven Koopman model and a Kalman filter for state estimation. 
-In contrast to the classical MPC based on a first-order model, the prediction model in Koopman MPC is formulated in the lifted state space introduced in Section~\ref{sec:deep_koopman}. 
+Koopman-based Model Predictive Control (Koopman MPC) combines the standard first-order MPC framework with a data-driven Koopman model and a Kalman filter for state estimation. 
+In contrast to the linear MPC based on a first-order model, the prediction model in Koopman MPC is formulated in the lifted state space introduced in Section~\ref{sec:deep_koopman}. 
 The lifted-state dynamics and output mapping given by equations~\eqref{eq:koopman_state} and~\eqref{eq:koopman_output} are directly used within the MPC prediction scheme \cite{korda2018,koopman_mpc_review}.
 
 From the MPC perspective, the Koopman-based prediction model is treated as a standard linear state-space model.
-The same quadratic cost function and input and output constraints as in classical MPC are employed.
+The same quadratic cost function and input and output constraints as in first-order MPC are employed.
 The main difference lies in the prediction model, which operates on the lifted state vector $z_k$, and in the use of a state estimator to initialize the prediction.
 
 At each sampling instant $t$, the Koopman MPC controller solves the following finite-horizon optimization problem
