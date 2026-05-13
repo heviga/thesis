@@ -1,7 +1,7 @@
 \chapter{Experimental Part}
 
 
-This chapter presents the practical implementation of modeling and control strategies for a plate heat exchanger, specifically utilizing the Armfield Process Plant Trainer PCT23 \cite{armfield_pct23_manual}. It details the procedures for system identification, controller design, and performance evaluation through both simulation and real-time experimentation. The approach throughout closely follows established practices in process control \cite{ljung_sysid, rawlings_mpc}, while adapting recent data-driven modeling techniques where appropriate.
+This chapter presents the practical implementation of modeling and control strategies for a plate heat exchanger, specifically utilizing the Armfield Process Plant Trainer PCT23 \cite{armfield_pct23_manual}. It details the procedures for system identification, controller design, and performance evaluation through both simulation and real-time experimentation. The approach closely follows established practices in process control \cite{ljung_sysid, rawlings_mpc}, while adapting recent data-driven modeling techniques where appropriate.
 
 \section{The Plate Heat Exchanger}
 \label{sec:practical_introduction}
@@ -18,9 +18,9 @@ The Armfield PCT23 is a laboratory-scale plate heat exchanger with two hydraulic
     \label{fig:pct23_plant}
 \end{figure}
 
-The hot medium is heated by an electric heater, whose power is regulated by a dedicated P controller to maintain the inlet temperature of the hot circuit at an approximately constant 76$^\circ$C. In this work, the heater control is treated as an auxiliary control loop and is not included in the main control design.
+The hot medium is heated by an electric heater, whose power is regulated by a dedicated proportional (P) controller to maintain the inlet temperature of the hot circuit at an approximately constant 76$^\circ$C. In this work, the heater control is treated as an auxiliary control loop and is not included in the main control design.
 
-The experimental setup is shown in Figure~\ref{fig:pct23_plant}. The plate heat exchanger is indicated by label~(1). The hot water circuit is driven by the heating pump (component~(5), which supplies heated water to the heat exchanger. The remaining components include the hot and cold water reservoirs and the corresponding circulation pumps.
+The experimental setup is shown in Figure~\ref{fig:pct23_plant}. The plate heat exchanger is indicated by label~(1). The hot water circuit is driven by the heating pump (component~(5)), which supplies heated water to the heat exchanger. The remaining components include the hot and cold water reservoirs and the corresponding circulation pumps.
 
 The system is treated as a SISO system with the outlet temperature from the heat exchanger, denoted as $T_4$, as the controlled output and the pump power of the hot circuit, denoted as Pump~F, as the manipulated input. The pump power directly affects the flow rate and, consequently, the heat transfer rate. The control input is constrained by the physical limits of the pump within the range of $20$--$100~\%$. The pump for the cold liquid was kept constant at $50~\%$.
 
