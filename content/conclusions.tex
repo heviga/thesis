@@ -561,13 +561,16 @@ $T_0 \in [55, 68]\,^\circ\mathrm{C}$. The resulting transient metrics for each c
     \textbf{Mean} &
     53.67 & 94.59  & 336.74 & 1775.39 & 122.63 &
     98.67 & 127.20 & 351.69 & 6987.59 & 123.58 \\
+    \textbf{Median} &
+    60.50 & 66.36 & 138.69 & 1358.95 & 69.47 &
+    64.00 & 122.88 & 166.83 & 2691.83 & 76.46 \\
     \textbf{Sum} &
     322 & 567.52 & 2020.43 & 10652.37 & 735.77 &
     592 & 763.19 & 2110.17 & 41925.52 & 741.48 \\
     \hline
     \end{tabular}%
     }
-    \end{table}
+\end{table}
 
 The integral metrics (IAE, ISE, ITAE) are not
 normalized by the duration of the transient phase. Consequently, their values depend not
@@ -585,7 +588,7 @@ and lower accumulated error, especially in terms of IAE and ITAE. On average, th
 ($94.59$ compared to $127.20$). The mean values of ISE and the transient
 objective function are very similar for both controllers.
 
-For illustration, take $T_0 = 62,^\circ\mathrm{C}$, where the Koopman MPC reaches the settling band after only $12$ samples, while the linear model-based MPC does not satisfy the settling condition until the end of the observation window. Consequently, the integral-based metrics for the linear MPC become considerably larger, primarily due to the longer transient duration.
+For illustration, take $T_0 = 62\,^\circ\mathrm{C}$, where the Koopman MPC reaches the settling band after only $12$ samples, while the linear model-based MPC does not satisfy the settling condition until the end of the observation window. Consequently, the integral-based metrics for the linear MPC become considerably larger, primarily due to the longer transient duration. This case is unique within the evaluated experiments and can be considered an outlier, since it strongly influences the mean and sum values. For this reason, the median values provide an additional and more representative comparison of the typical transient behavior of both controllers.
 
 
 \begin{figure}[!t]
