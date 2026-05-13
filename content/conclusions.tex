@@ -1,7 +1,7 @@
 \chapter{Experimental Part}
 
 
-This chapter presents the practical implementation of modeling and control strategies for a plate heat exchanger, specifically utilizing the Armfield Process Plant Trainer PCT23 \cite{armfield_pct23_manual}. It details the procedures for system identification, controller design, and performance evaluation through both simulation and real-time experimentation. The approach closely follows established practices in process control \cite{ljung_sysid, rawlings_mpc}, while adapting recent data-driven modeling techniques where appropriate.
+This chapter presents the practical implementation of modeling and control strategies for a plate heat exchanger, specifically utilizing the Armfield Process Plant Trainer PCT23 \cite{armfield_pct23_manual}. It details the procedures for system identification, controller design, and performance evaluation through both simulation and real-time experimentation. The approach closely follows established practices in process control \cite{morari1999, rawlings_mpc}, while adapting recent data-driven modeling techniques where appropriate.
 
 \section{The Plate Heat Exchanger}
 \label{sec:practical_introduction}
@@ -31,7 +31,7 @@ The main aim of the practical part is to identify suitable models of the heat ex
 
 \section{System Identification}
 
-System identification experiments were conducted to collect input–output data for developing both classical and data-driven models of the heat exchanger. All experiments were performed on the Armfield PCT23 setup. The identification process follows standard procedures outlined in system identification textbooks \cite{ljung_sysid}.
+System identification experiments were conducted to collect input–output data for developing both classical and data-driven models of the heat exchanger. All experiments were performed on the Armfield PCT23 setup. The identification process follows standard procedures outlined in system identification textbooks \cite{morari1999}.
 
 Before the identification measurements, the heat exchanger was operated until steady conditions were achieved. The temperature of the hot circuit was regulated by the built-in electric heater, whose power was controlled by a simple proportional controller. 
 During the identification experiments, the pump supplying the hot circuit (Pump~F) was used as the manipulated input. The pump speed was changed in steps every $250~\mathrm{s}$ to capture the system's dynamic response.
@@ -651,7 +651,7 @@ For illustration, take $T_0 = 62\,^\circ\mathrm{C}$, where the Koopman MPC reach
 
 This section discusses the main observations from the comparison of first-order linear and Koopman-based MPC for plate heat exchanger control. The discussion focuses on the relation between model structure, closed-loop behavior, and practical applicability.
 
-Both the first-order linear model and the data-driven Koopman model were identified from experimental data, but each model represents the process in a different way. The linear model captured the dominant thermal dynamics with a simple first-order structure, which made the controller design straightforward and provided reliable behavior near the operating point~\cite{ljung_sysid}. However, this model represents only a simplified approximation of the heat exchanger dynamics. Its accuracy therefore decreases when the system moves farther from the operating region or when nonlinear heat-transfer effects and disturbances become more significant. This was also visible in open-loop prediction, where the linear model achieved an open-loop RMSE of approximately $1.70\,^\circ$C.
+Both the first-order linear model and the data-driven Koopman model were identified from experimental data, but each model represents the process in a different way. The linear model captured the dominant thermal dynamics with a simple first-order structure, which made the controller design straightforward and provided reliable behavior near the operating point~\cite{morari1999}. However, this model represents only a simplified approximation of the heat exchanger dynamics. Its accuracy therefore decreases when the system moves farther from the operating region or when nonlinear heat-transfer effects and disturbances become more significant. This was also visible in open-loop prediction, where the linear model achieved an open-loop RMSE of approximately $1.70\,^\circ$C.
 
 The Koopman model used neural-network-based lifting to represent the measured dynamics in a higher-dimensional latent space. This gave the model more flexibility and allowed it to approximate nonlinear input--output behavior better than the first-order linear model~\cite{korda2018, otto2019linearly, yeung2019learning}. The open-loop prediction error was slightly lower, with an RMSE of approximately $1.67\,^\circ$C. This improvement is not large, but it may indicate that the lifted representation captures additional information about the process dynamics. At the same time, this increased flexibility requires more data, computational resources, as discussed in Section~\ref{sec:koopman_identification}, and may benefit from more careful tuning. 
 

@@ -19,7 +19,7 @@ heat exchangers, step-response experiments are commonly used to identify
 low-order linear models. These models typically describe the dominant
 dynamics using a steady-state gain and a single time constant, which is
 often sufficient for control design in a limited operating region
-\cite{ljung_sysid}. Low-order linear models are particularly common in SISO heat exchanger
+\cite{morari1999}. Low-order linear models are particularly common in SISO heat exchanger
 configurations \cite{mpc_heat_exchanger}.
 
 
@@ -27,9 +27,9 @@ Although such models perform well near a nominal operating point, their accuracy
 
 Data-driven modeling provides an alternative to classical first-principles and step-response-based approaches.  Rather than relying on physical laws or simplified assumptions, data-driven methods construct system representations directly from measured input--output data. 
 This approach captures complex and nonlinear system behavior more accurately, particularly when physical modeling is challenging or when the system operates over a broad range of conditions. 
-\cite{ljung_sysid}.
+\cite{morari1999}.
 
-Data-driven modeling provides an alternative to classical first-principles and step-response-based approaches. Rather than relying only on physical laws or simplified assumptions, data-driven methods construct system representations directly from measured input--output data. This approach can be useful for thermal systems, where nonlinear heat transfer, changing operating conditions, and unmeasured disturbances make just physical modeling difficult \cite{ljung_sysid}.
+Data-driven modeling provides an alternative to classical first-principles and step-response-based approaches. Rather than relying only on physical laws or simplified assumptions, data-driven methods construct system representations directly from measured input--output data. This approach can be useful for thermal systems, where nonlinear heat transfer, changing operating conditions, and unmeasured disturbances make just physical modeling difficult \cite{morari1999}.
 
 Several recent works show the use of data-driven models. Brandes investigated data-driven modeling of heat pumps and thermal storage units for MPC and compared static models with dynamic state-space approaches based on Dynamic Mode Decomposition with control (DMDc) and Sparse Identification of Nonlinear Dynamics with control (SINDyc). In that work, the models were evaluated for heating and cooling case studies, including their prediction performance and model complexity. The study also discussed neural-network-based models, noting that they can represent nonlinear behavior but usually require more training data and have lower interpretability compared with simpler state-space approaches \cite{brandes2022}.
 
