@@ -7,7 +7,11 @@ This chapter presents the practical implementation of modeling and control strat
 \label{sec:practical_introduction}
 The Armfield PCT23 is a laboratory-scale plate heat exchanger with two hydraulically separated circuits: a hot-fluid circuit and a cold-fluid circuit. Heat transfer between the two media takes place in the plate heat exchanger, while the overall process dynamics are influenced by the flow rates and inlet temperatures of both circuits. The system exhibits slow dynamics and nonlinear behavior typical of thermal processes.
 
-\begin{figure}[htbp]
+The hot medium is heated by an electric heater, whose power is regulated by a dedicated proportional (P) controller to maintain the inlet temperature of the hot circuit at an approximately constant 76$^\circ$C. In this work, the heater control is treated as an auxiliary control loop and is not included in the main control design.
+
+The experimental setup is shown in Figure~\ref{fig:pct23_plant}. The plate heat exchanger is indicated by label~(1). The hot water circuit is driven by the heating pump (component~(5)), which supplies heated water to the heat exchanger. The remaining components include the hot and cold water reservoirs and the corresponding circulation pumps.
+
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.8\textwidth]{images/PU.png}
     \caption{Armfield Process Plant Trainer PCT23. (1) Plate heat exchanger, 
@@ -17,13 +21,9 @@ The Armfield PCT23 is a laboratory-scale plate heat exchanger with two hydraulic
     (5) Pump~F for the hot water circuit.}
     \label{fig:pct23_plant}
 \end{figure}
+\FloatBarrier
 
-The hot medium is heated by an electric heater, whose power is regulated by a dedicated proportional (P) controller to maintain the inlet temperature of the hot circuit at an approximately constant 76$^\circ$C. In this work, the heater control is treated as an auxiliary control loop and is not included in the main control design.
-
-The experimental setup is shown in Figure~\ref{fig:pct23_plant}. The plate heat exchanger is indicated by label~(1). The hot water circuit is driven by the heating pump (component~(5)), which supplies heated water to the heat exchanger. The remaining components include the hot and cold water reservoirs and the corresponding circulation pumps.
-
-
-The system is treated as a SISO system with the outlet temperature of the heated water from the heat exchanger, denoted as $T_4$, as the controlled output and the hot-circuit pump control signal, denoted as Pump~F, as the manipulated input. In the experimental setup, signal of Pump~F is specified as a relative value in percent. In this work, this manipulated input is referred to as the pump speed. According to the PCT23 specification, the heating-fluid flow-rate range is $0$--$600~\mathrm{ml/min}$. In this work, Pump~F is used as a relative input in percent and is referred to as the pump speed. The input therefore does not represent electrical pump power in watts, but the relative pump setting that affects the hot-water flow rate and the heat transfer rate. The control input was constrained to the operating range used in the experiments, namely $20$--$100~\%$. The signal of the pump for the cold liquid was kept constant at $50~\%$.
+The system is treated as a SISO system with the outlet temperature of the heated water from the heat exchanger, denoted as $T_4$, as the controlled output and the hot-circuit pump control signal, denoted as Pump~F, as the manipulated input. In the experimental setup, signal of Pump~F is specified as a relative value in percent. According to the PCT23 specification, the heating-fluid flow-rate range is $0$--$600~\mathrm{ml/min}$. In this work, Pump~F is used as a relative input in percent and is referred to as the pump speed. The input therefore does not represent electrical pump power in watts, but the relative pump setting that affects the hot-water flow rate and the heat transfer rate. The control input was constrained to the operating range used in the experiments, namely $20$--$100~\%$. The signal of the pump for the cold liquid was kept constant at $50~\%$.
 
 The main aim of the practical part is to identify suitable models of the heat exchanger process from experimental data, design MPC controllers using both a classical first-order model and a data-driven Koopman model, and compare their closed-loop performance under identical constraints in both simulation and real-time operation on the PCT23 system. This comparative methodology has been adopted in recent literature for benchmarking advanced control strategies \cite{benchmark_mpc2021}.
 
@@ -40,13 +40,6 @@ The pump of the cold circuit (Pump~W) was operated at a constant speed of $50~\%
 
 The measured output used for identification was the temperature at the outlet of the heat exchanger, denoted as $T_4$. The pump speed and the corresponding outlet temperature were recorded continuously. Figure~\ref{fig:raw_measurements} shows the applied input signal (Pump~F speed) and the resulting outlet temperature response used for system identification.
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{images/raw_identification_measurements.png}
-    \caption{Measured input signal (Pump~F speed) and measured outlet temperature $T_4$ used for system identification.}
-    \label{fig:raw_measurements}
-\end{figure}
-
 Before model identification, the measured input and output signals were normalized in order to work with dimensionless variables and to improve numerical conditioning. For a measured signal $x$, the normalized value was computed as
 \begin{equation}
 x_{\mathrm{scaled}}(k) =
@@ -62,6 +55,17 @@ u_{\mathrm{scaled}}(k) =
 \frac{u(k)-u_{\mathrm{mean}}}{u_{\mathrm{std}}}.
 \label{eq:yu_scaling}
 \end{equation}
+
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=\textwidth]{images/raw_identification_measurements.png}
+    \caption{Measured input signal (Pump~F speed) and measured outlet temperature $T_4$ used for system identification.}
+    \label{fig:raw_measurements}
+\end{figure}
+
+\FloatBarrier
+
 
 The empirical mean and standard deviation were computed as
 \begin{equation}
@@ -320,12 +324,13 @@ It is important to note that these closed-loop simulations are primarily intende
 
 A representative example of the simulation is shown in Figure~\ref{fig:cl_response45} for the initial temperature $T_0 = 45,^{\circ}\mathrm{C}$, i.e., for an initial condition significantly below the steady-state operating region. In this case, both controllers first apply a strong control action at the actuator limit and then gradually reduce the input as the output approaches steady state. The responses show that both MPC formulations can regulate the system from a large initial deviation toward the steady-state. 
 
-\begin{figure}[!t]
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{images/IC_01_y0_45_00.png}
     \caption{Closed-loop response and control input comparison for Koopman MPC and MPC based on the linear model identified from step response (Linear MPC) for the initial condition $T_0 = 45\,^{\circ}\mathrm{C}$. This case illustrates that both controllers regulate the simulated plant to the steady-state operating region, also from a large initial deviation.}
     \label{fig:cl_response45}
 \end{figure}
+\FloatBarrier
 
 To evaluate closed-loop performance, three metrics were considered: root mean square error (RMSE), integral of absolute error (IAE), and the closed-loop quadratic objective value. The IAE is defined as
 \begin{equation}
@@ -342,7 +347,7 @@ When averaged over all tested initial conditions, the mean RMSE is $1.59\,^{\cir
 
 Table~\ref{tab:performance_metrics} summarizes the results for all tested initial temperatures. For initial conditions close to the operating point, both controllers achieve very small tracking errors. As the initial temperature moves further from the reference, both RMSE and IAE increase, as expected due to larger transient deviations and stronger control action requirements.
 
-\begin{table}[!t]
+\begin{table}[!htbp]
     \centering
     \caption{Performance metrics for Koopman MPC and MPC based on a linear model identified from step response (Linear MPC), evaluated for different initial temperatures.}
     \label{tab:performance_metrics}
@@ -369,16 +374,14 @@ Table~\ref{tab:performance_metrics} summarizes the results for all tested initia
     \hline
     \end{tabular}
 \end{table}
+\FloatBarrier
 
 The same trend can be observed for both controllers. When the initial temperature is close to the operating point, the transient deviation is small and the RMSE and IAE values remain low. For larger initial deviations, the response takes longer to reach the steady-state region, which leads to higher accumulated errors. A similar trend is also reflected in the closed-loop objective value.
 
 The results do not indicate a strong dominance of one controller over the other across all operating conditions. However, the Koopman MPC achieves slightly lower RMSE across all tested initial temperatures and lower IAE in every case. This suggests that the Koopman-based prediction model provides a slightly better overall tracking quality on the considered simulation plant, even though the differences remain relatively small.
-
-
-
 All three performance metrics are also visualized in Figure~\ref{fig:sim_metrics_summary}.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=\textwidth]{images/Summary_metrics.png}
     \caption{Closed-loop performance metrics versus initial temperature $T_0$ for Koopman MPC and MPC based on the linear model identified from step response: IAE, RMSE, and the closed-loop objective value $J_{\mathrm{CL}}$.}
@@ -405,18 +408,16 @@ The prediction horizon, cost function weights, constraints, and Kalman filter pa
 During the experiments, the outlet temperature $T_4$ was used as the feedback signal.
 The heater loop and the pump in the secondary circuit were kept unchanged.
 The only manipulated variable was the pump speed controlled by the MPC.
+Figure~\ref{fig:cl_exp_T0_55} shows the experimental closed-loop response for the case starting from $T_0 = 55^{\circ}\mathrm{C}$.
 
-\begin{figure}[!ht]
-\centering
-\includegraphics[width=\textwidth]{images/compare_cl_T0_55.png}
-\caption{Experimental closed-loop response and control input for the initial temperature $T_0 = 55,^{\circ}\mathrm{C}$.}
-\label{fig:cl_exp_T0_55}
-\end{figure}
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=\textwidth]{images/compare_cl_T0_55.png}
+    \caption{Experimental closed-loop response and control input for the initial temperature $T_0 = 55,^{\circ}\mathrm{C}$.}
+    \label{fig:cl_exp_T0_55}
+    \end{figure}
 
-Figure~\ref{fig:cl_exp_T0_55} shows the experimental closed-loop response for the case starting from
-$T_0 = 55,^{\circ}\mathrm{C}$.
 Both controllers regulate the outlet temperature towards the operating point and reach a stable steady-state region.
-
 At the beginning of the experiment, both controllers apply a strong control action close to the actuator limits.
 The Koopman MPC remains at the upper input constraint for slightly longer and exhibits more aggressive behavior, leading to a small temperature overshoot.
 The first-order MPC reduces the input earlier and follows a smoother trajectory towards the steady state.

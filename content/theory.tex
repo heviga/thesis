@@ -91,7 +91,7 @@ In this work, the decoder is linear. Therefore, it corresponds directly to the o
 
 Figures~\ref{fig:encoder_network} and~\ref{fig:decoder_network} show schematic examples of the encoder and decoder used in this work.
 
-\begin{figure}[htbp]
+\begin{figure}[!htbp]
     \centering
     \resizebox{\linewidth}{!}{%
     \begin{tikzpicture}[
@@ -186,15 +186,8 @@ Figures~\ref{fig:encoder_network} and~\ref{fig:decoder_network} show schematic e
     \label{fig:encoder_network}
 \end{figure}
 
-The predicted output is obtained using a decoder
-\begin{equation}
-\hat{y}_k = f_{\mathrm{dec}}(z_k).
-\label{eq:koopman_decoder}
-\end{equation}
 
-In the present implementation, the decoder is linear, which means that the lifted state is mapped directly to the predicted output by a linear transformation.
-
-\begin{figure}[htbp]
+\begin{figure}[!htbp]
     \centering
     \begin{tikzpicture}[
         >=Latex,
@@ -260,13 +253,11 @@ In the present implementation, the decoder is linear, which means that the lifte
     \label{fig:decoder_network}
 \end{figure}
 
-In the implemented Deep Koopman model, this mapping is represented by a linear decoder, which corresponds directly to the matrix $C_{\mathcal{K}}$. The matrices $A_{\mathcal{K}}$ and $B_{\mathcal{K}}$ in Equation~\eqref{eq:koopman_state} represent the finite-dimensional approximation of the Koopman dynamics and the influence of the control input in the lifted space, respectively.
+\FloatBarrier
 
-All components of the model, including the encoder, the lifted linear dynamics, and the decoder, are identified simultaneously from data by minimizing a multi-step prediction error over measured trajectories.
+All components of the model, including the encoder, the lifted linear dynamics, and the decoder, are identified simultaneously from measured trajectories. The identification is performed using the Neuromancer framework, which formulates the training as a structured optimization problem and enables gradient-based learning.
 
-The identification is performed using the Neuromancer framework, which formulates the problem as a structured optimization task and enables efficient gradient-based training.
-
-Once the matrices are identified, the resulting Koopman model is a standard linear state-space model defined in the lifted coordinates and can be directly used for prediction and control.
+After training, the learned matrices $A_{\mathcal K}$, $B_{\mathcal K}$, and $C_{\mathcal K}$ define a linear state-space model in the lifted coordinates. This model can then be used directly as the prediction model in MPC.
 
 The individual steps of the identification process are summarized below.
 
@@ -338,6 +329,7 @@ This multi-objective formulation ensures accurate long-term prediction, consiste
 Once trained, the neural network is used only to define the lifting transformation. 
 The resulting Koopman model is then represented as a linear state-space system in the lifted coordinates and used for prediction and control.
 
+\newpage
 \section{Kalman Filter}
 \label{sec:KF}
 
