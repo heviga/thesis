@@ -186,7 +186,7 @@ The implemented model follows the Deep Koopman encoder--linear dynamics--decoder
 
 The latent dynamics were represented by the controlled Koopman model given in Equation~\eqref{eq:koopman_state}, where $A_{\mathcal K}$ corresponds to a trainable linear layer and $B_{\mathcal K}$ represents the influence of the control input in the lifted space. The output was reconstructed by a linear decoder, which corresponds directly to the output matrix $C_{\mathcal K}$ in Equation~\eqref{eq:koopman_output}. The Koopman matrices used later in MPC therefore correspond directly to the learned network weights. The total number of trainable parameters was $8170$.
 
-Training was performed on data segments of $n_{\mathrm{steps}} = 50$ and mini-batches of size $b_s = 100$. The Adam optimizer was employed with a learning rate of $10^{-3}$ and a fixed random seed, following best practices in neural network training \cite{kingma2015adam}. The maximum number of epochs was set to $900$, with early stopping based on the validation loss, a patience of $200$ epochs, and a warmup period of $100$ epochs. The training duration was approximately $35$ minutes on a single GPU.
+Training was performed on data segments of $n_{\mathrm{steps}} = 50$ and mini-batches of size $b_s = 100$. The Adam optimizer was employed with a learning rate of $10^{-3}$ and a fixed random seed, following best practices in neural network training \cite{kingma2015adam}. The maximum number of epochs was set to $900$, with early stopping based on the validation loss, a patience of $200$ epochs, and a warmup period of $100$ epochs. The training duration was approximately $35$ minutes on the used computer.
 
 The measured dataset was split into training and testing parts for model validation. In contrast, the parameters of the linear model were obtained from averaged step responses computed from the measured data. The raw measured input and output signals used for identification are shown in Figure~\ref{fig:raw_measurements}.
 
@@ -215,11 +215,11 @@ The identified Koopman model was then evaluated in open loop on the available te
 \label{eq:koopman_rmseOL}
 \end{equation}
 
-The results indicate that the Koopman model achieves a slightly lower prediction error compared to the first-order model. The difference is relatively small, suggesting that both models capture the dominant system dynamics, while the Koopman model provides a marginal improvement by representing nonlinear effects.
+The results indicate that the Koopman model achieves a slightly lower open-loop prediction error compared to the first-order linear model. The RMSE decreases from $1.6962\,^\circ\mathrm{C}$ to $1.6681\,^\circ\mathrm{C}$, which corresponds to an improvement of approximately $1.66\,\%$. The difference is relatively small, suggesting that both models capture the dominant system dynamics, while the Koopman model provides only a marginal improvement in open-loop prediction.
 
 The identified matrices \(A_{\mathcal K}\), \(B_{\mathcal K}\), and \(C_{\mathcal K}\) were determined from the trained neural Koopman model as the linear operators describing, respectively, the state evolution in the lifted space, the effect of the control input, and the mapping from the lifted state back to the measured output. The direct feedthrough term was assumed to be zero, i.e., \(D_{\mathcal K}=0\). These matrices were then used in the subsequent Koopman-based MPC formulation and in the experimental evaluation on the heat exchanger system.
 
-For a visual comparison, Figure~\ref{fig:open_loop_compare} shows the measured test output alongside the open-loop predictions from both identified models. The linear model follows the dominant trend of the measured response well, while the Koopman model provides comparable predictive performance. The figure confirms that both models are suitable for subsequent controller design, although both accumulate prediction error over longer horizons.
+For a visual comparison, Figure~\ref{fig:open_loop_compare} shows the measured test output alongside the open-loop predictions from both identified models. The linear model follows the dominant trend of the measured response well, while the Koopman model provides comparable predictive performance. Small deviations from the measured output are visible in both cases, but the prediction accuracy is sufficient for subsequent controller design.
 
 \begin{figure}[htbp]
     \centering
@@ -338,7 +338,7 @@ Each metric looks at a different piece of how the closed-loop system behaves. RM
 
 For the initial condition $T_0 = 45\,^{\circ}\mathrm{C}$, the Koopman MPC achieved $\mathrm{RMSE}=4.58\,^{\circ}\mathrm{C}$, $\mathrm{IAE}=358.28$, and $J_{\mathrm{CL}}=563.53$, whereas the MPC based on the linear model identified from the step response achieved $\mathrm{RMSE}=4.62\,^{\circ}\mathrm{C}$, $\mathrm{IAE}=380.57$, and $J_{\mathrm{CL}}=562.36$. Although the quadratic objective values are almost identical in this case, the Koopman MPC yields slightly smaller tracking errors in both RMSE and IAE.
 
-When averaged over all tested initial conditions, the mean RMSE is $1.59\,^{\circ}\mathrm{C}$ for the Koopman MPC and $1.65\,^{\circ}\mathrm{C}$ for the linear-model-based MPC. The mean IAE values are $115.77$ and $130.41$, respectively. The mean closed-loop objective values are $131.37$ and $131.79$, which are nearly identical.
+When averaged over all tested initial conditions, the mean RMSE is $1.59\,^{\circ}\mathrm{C}$ for the Koopman MPC and $1.65\,^{\circ}\mathrm{C}$ for the linear-model-based MPC. This corresponds to an improvement of approximately $3.6\,\%$ in RMSE. The mean IAE values are $115.77$ and $130.41$, respectively, which represents a reduction of approximately $11.2\,\%$ for the Koopman MPC. The mean closed-loop objective values are $131.37$ and $131.79$, corresponding to a difference of only about $0.3\,\%$.
 
 Table~\ref{tab:performance_metrics} summarizes the results for all tested initial temperatures. For initial conditions close to the operating point, both controllers achieve very small tracking errors. As the initial temperature moves further from the reference, both RMSE and IAE increase, as expected due to larger transient deviations and stronger control action requirements.
 
@@ -351,8 +351,8 @@ Table~\ref{tab:performance_metrics} summarizes the results for all tested initia
     \multirow{2}{*}{$T_0$ [$^\circ$C]} &
     \multicolumn{3}{c|}{Koopman MPC} &
     \multicolumn{3}{c}{Linear MPC} \\
-     & RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ &
-     RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ \\
+     & RMSE & IAE & $J_{\mathrm{CL}}$ &
+     RMSE & IAE & $J_{\mathrm{CL}}$ \\
     \hline
     45 & 4.58 & 358.28 & 563.53 & 4.62 & 380.57 & 562.36 \\
     50 & 2.93 & 209.77 & 259.79 & 2.98 & 231.62 & 257.93 \\
@@ -373,7 +373,6 @@ Table~\ref{tab:performance_metrics} summarizes the results for all tested initia
 The same trend can be observed for both controllers. When the initial temperature is close to the operating point, the transient deviation is small and the RMSE and IAE values remain low. For larger initial deviations, the response takes longer to reach the steady-state region, which leads to higher accumulated errors. A similar trend is also reflected in the closed-loop objective value.
 
 The results do not indicate a strong dominance of one controller over the other across all operating conditions. However, the Koopman MPC achieves slightly lower RMSE across all tested initial temperatures and lower IAE in every case. This suggests that the Koopman-based prediction model provides a slightly better overall tracking quality on the considered simulation plant, even though the differences remain relatively small.
-
 
 
 
@@ -459,13 +458,12 @@ Table~\ref{tab:performance_metrics_exp} summarizes the performance metrics for a
 \multirow{2}{*}{$T_0$ [$^\circ$C]} &
 \multicolumn{3}{c|}{Koopman MPC} &
 \multicolumn{3}{c}{Linear MPC} \\
-& RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ &
-RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ \\
+& RMSE & IAE & $J_{\mathrm{CL}}$ &
+RMSE & IAE & $J_{\mathrm{CL}}$ \\
 \hline
 55 & 2.004  & 272.46 & 365.86 & 1.872 & 296.91 & 316.18 \\
 58 & 1.259  & 172.00 & 185.07 & 1.471 & 256.00 & 225.12 \\
 60 & 0.693  & 128.34 & 74.84  & 0.723 & 147.94 & 59.08  \\
-\rowcolor{gray!15}
 62 & 0.597  & 159.42 & 73.19  & 0.797 & 225.07 & 74.61  \\
 66 & 0.594  & 134.62 & 64.63  & 0.690 & 182.05 & 64.86  \\
 68 & 0.922  & 203.83 & 141.72 & 1.009 & 248.83 & 143.66 \\
@@ -540,7 +538,7 @@ end of the transient interval used in the evaluation.
 \begin{figure}[!ht]
 \centering
 \includegraphics[width=\textwidth]{images/compare_cl_T0_60.png}
-\caption{Closed-loop response and control input for $T_0 = 60\,^\circ\mathrm{C}$ with indicated settling time.}
+\caption{Closed-loop response and control input for $T_0 = 60\,^\circ\mathrm{C}$. The vertical dotted lines indicate the settling instants used to define the end of the transient phase for each controller.}
 \label{fig:cl_exp_T0_60}
 \end{figure}
 
@@ -654,9 +652,9 @@ This section discusses the main observations from the comparison of linear and K
 
 Both the first-order linear model and the data-driven Koopman model were identified from experimental data, but each model represents the process in a different way. The linear model captured the dominant thermal dynamics with a simple first-order structure, which made the controller design straightforward and provided reliable behavior near the operating point~\cite{ljung_sysid}. However, this model represents only a simplified approximation of the heat exchanger dynamics. Its accuracy therefore decreases when the system moves farther from the operating region or when nonlinear heat-transfer effects and disturbances become more significant. This was also visible in open-loop prediction, where the linear model showed accumulated prediction errors over longer horizons, with an open-loop RMSE of approximately $1.70\,^\circ$C.
 
-The Koopman model used neural-network-based lifting to represent the measured dynamics in a higher-dimensional latent space. This gave the model more flexibility and allowed it to approximate nonlinear input--output behavior better than the first-order linear model~\cite{korda2018, otto2019linearly, yeung2019learning}. The open-loop prediction error was slightly lower, with an RMSE of approximately $1.67\,^\circ$C. This improvement is not large, but it may indicate that the lifted representation captures additional information about the process dynamics. At the same time, this increased flexibility requires more data, computational resources, as discussed in Section~\ref{sec:koopman_identification}, and may benefit from more careful tuning. Since no explicit stability constraint was imposed during training, the generalization of the model outside the identified operating region remains an important limitation.
+The Koopman model used neural-network-based lifting to represent the measured dynamics in a higher-dimensional latent space. This gave the model more flexibility and allowed it to approximate nonlinear input--output behavior better than the first-order linear model~\cite{korda2018, otto2019linearly, yeung2019learning}. The open-loop prediction error was slightly lower, with an RMSE of approximately $1.67\,^\circ$C. This improvement is not large, but it may indicate that the lifted representation captures additional information about the process dynamics. At the same time, this increased flexibility requires more data, computational resources, as discussed in Section~\ref{sec:koopman_identification}, and may benefit from more careful tuning. 
 
-The closed-loop behavior follows directly from the model properties. The first-order MPC is based on a conservative prediction model that mainly describes the dominant slow thermal response of the heat exchanger. As a result, it usually produces smoother and more regular control inputs. The Koopman MPC, on the other hand, uses a prediction model that can represent nonlinear transient behavior more flexibly. It reacts more strongly when the measured temperature differs from the desired operating region. This explains why the Koopman controller often reduces the tracking error faster, but may also produce more aggressive input changes or small overshoots.
+The differences in closed-loop behavior can be explained by the properties of the prediction models. The first-order MPC is based on a conservative prediction model that mainly describes the dominant slow thermal response of the heat exchanger. As a result, it usually produces smoother and more regular control inputs. The Koopman MPC, on the other hand, uses a prediction model that can represent nonlinear transient behavior more flexibly. It reacts more strongly when the measured temperature differs from the desired operating region. This explains why the Koopman controller often reduces the tracking error faster, but may also produce more aggressive input changes or small overshoots.
 
 Both controllers were implemented with identical structure, constraints, and weights, as described in Section~\ref{sec:mpc_design}. This allowed the effect of the prediction model to be compared under the same control design. However, identical tuning is not necessarily optimal for both models. The first-order linear controller might benefit from more conservative tuning, while the Koopman controller could potentially use its more expressive prediction model more effectively with different weights or additional constraints on the input movement.
 
