@@ -25,7 +25,7 @@ The experimental setup is shown in Figure~\ref{fig:pct23_plant}. The plate heat 
 The system is treated as a SISO system with the outlet temperature from the heat exchanger, denoted as $T_4$, as the controlled output and the pump power of the hot circuit, denoted as Pump~F, as the manipulated input. The pump power directly affects the flow rate and, consequently, the heat transfer rate. The control input is constrained by the physical limits of the pump within the range of $20$--$100~\%$. The pump for the cold liquid was kept constant at $50~\%$.
 
 
-The main aim of the practical part is to identify suitable models of the heat exchanger process from experimental data, design MPC controllers using both a classical first-order model and a data-driven Koopman model, and compare their closed-loop performance under identical constraints in both simulation and real-time operation on the PCT23 system. This comparative methodology has been widely adopted in recent literature for benchmarking advanced control strategies \cite{benchmark_mpc2021}.
+The main aim of the practical part is to identify suitable models of the heat exchanger process from experimental data, design MPC controllers using both a classical first-order model and a data-driven Koopman model, and compare their closed-loop performance under identical constraints in both simulation and real-time operation on the PCT23 system. This comparative methodology has been adopted in recent literature for benchmarking advanced control strategies \cite{benchmark_mpc2021}.
 
 
 
@@ -84,7 +84,7 @@ K \approx 1.17, \qquad \tau \approx 68~\mathrm{samples}.
 \label{eq:strejc_identified_parameters}
 \end{equation}
 
-With the sampling period $T_s = 1~\mathrm{s}$, the identified parameters were substituted into the discrete-time state-space form given in Equation~\eqref{eq:first_order_discrete_matrices}. This yields
+With the sampling period $T_{\mathrm{s}} = 1~\mathrm{s}$, the identified parameters were substituted into the discrete-time state-space form given in Equation~\eqref{eq:first_order_discrete_matrices}. This yields
 \begin{equation}
 A = 0.985, \qquad B = 0.016, \qquad C = 1, \qquad D = 0.
 \label{eq:strejc_discrete_matrices}
@@ -558,8 +558,8 @@ $T_0 \in [55, 68]\,^\circ\mathrm{C}$. The resulting transient metrics for each c
     \multicolumn{5}{c|}{Koopman MPC} &
     \multicolumn{5}{c}{Linear MPC} \\
     &
-    $T_s$ & IAE & ISE & ITAE & $J_{\mathrm{CL}}$ &
-    $T_s$ & IAE & ISE & ITAE & $J_{\mathrm{CL}}$ \\
+    $T_{\mathrm{s}}$ & IAE & ISE & ITAE & $J_{\mathrm{CL}}$ &
+    $T_{\mathrm{s}}$ & IAE & ISE & ITAE & $J_{\mathrm{CL}}$ \\
     \hline
     55 & 69 & 228.47 & 1189.92 & 4463.12  & 358.00 &
     65 & 208.86 & 1013.38 & 4075.62  & 304.53 \\
@@ -615,7 +615,7 @@ For illustration, take $T_0 = 62\,^\circ\mathrm{C}$, where the Koopman MPC reach
 
     \includegraphics[width=0.67\linewidth]{images/transient_metrics_summary_2.pdf}
 
-    \caption{Transient performance metrics versus initial temperature $T_0$ for Koopman MPC and linear MPC: settling time $T_s$, IAE, ISE, ITAE, and the transient objective value $J_{\mathrm{CL}}$.}
+    \caption{Transient performance metrics versus initial temperature $T_0$ for Koopman MPC and linear MPC: settling time, IAE, ISE, ITAE, and the transient objective value $J_{\mathrm{CL}}$.}
     \label{fig:transient_metrics_summary}
 \end{figure}
 
