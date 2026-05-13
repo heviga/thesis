@@ -280,7 +280,7 @@ The baseline model uses an encoder--decoder structure. The measured outlet tempe
 
 The latent dynamics of the baseline model are described by the discrete-time model
 \begin{equation}
-    z^{\mathrm{b}}_{k+1} = A^{\mathrm{b}}_{\mathcal{K}} z^{\mathrm{b}}_k + B^{\mathrm{b}}_{\mathcal{K}} u_k.
+    z^{\mathrm{b}}_{k+1} = A^{\mathrm{b}}_{\mathcal{K}} z^{\mathrm{b}}_k + B^{\mathrm{b}}_{\mathcal{K}} u_k,
 \label{eq:baseline_latent_dynamics}
 \end{equation}
 where $z^{\mathrm{b}}_k$ denotes the lifted latent state of the baseline model and $u_k$ is the control input. The physical output is reconstructed as
