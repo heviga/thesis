@@ -47,12 +47,51 @@ The measured output used for identification was the temperature at the outlet of
     \label{fig:raw_measurements}
 \end{figure}
 
-For comparison of responses obtained at different operating points, the measured signals were centered using their empirical mean values,
+Before model identification, the measured input and output signals were normalized in order to work with dimensionless variables and to improve numerical conditioning. For a measured signal $x$, the normalized value was computed as
 \begin{equation}
-\bar{y} = \mathrm{mean}(y) = 59.07\,^{\circ}\mathrm{C}, \qquad
-\bar{u} = \mathrm{mean}(u) = 65.84\,\%.
+x_{\mathrm{scaled}}(k) =
+\frac{x(k)-x_{\mathrm{mean}}}{x_{\mathrm{std}}},
+\label{eq:data_scaling}
 \end{equation}
-These values were also used for the step response analysis.
+where $x_{\mathrm{mean}}$ and $x_{\mathrm{std}}$ denote the empirical mean and standard deviation of the corresponding measured signal. Therefore, for the measured output and input signals, the scaling was applied as
+\begin{equation}
+y_{\mathrm{scaled}}(k) =
+\frac{y(k)-y_{\mathrm{mean}}}{y_{\mathrm{std}}},
+\qquad
+u_{\mathrm{scaled}}(k) =
+\frac{u(k)-u_{\mathrm{mean}}}{u_{\mathrm{std}}}.
+\label{eq:yu_scaling}
+\end{equation}
+
+The empirical mean and standard deviation were computed as
+\begin{equation}
+x_{\mathrm{mean}} =
+\frac{1}{N_{\mathrm{s}}}
+\sum_{k=1}^{N_{\mathrm{s}}} x(k),
+\label{eq:mean_definition}
+\end{equation}
+\begin{equation}
+x_{\mathrm{std}} =
+\sqrt{
+\frac{1}{N_{\mathrm{s}}-1}
+\sum_{k=1}^{N_{\mathrm{s}}}
+\left(x(k)-x_{\mathrm{mean}}\right)^2
+},
+\label{eq:std_definition}
+\end{equation}
+where $N_{\mathrm{s}}$ denotes the number of samples used to compute the scaling parameters.
+
+In this work, the scaling parameters were
+\begin{equation}
+y_{\mathrm{mean}} = 59.07, \qquad y_{\mathrm{std}} = 6.91,
+\label{eq:output_scaling_parameters}
+\end{equation}
+\begin{equation}
+u_{\mathrm{mean}} = 65.84, \qquad u_{\mathrm{std}} = 22.91.
+\label{eq:input_scaling_parameters}
+\end{equation}
+The same scaling was used for the Koopman model identification and later for the MPC formulation, so that the cost function and constraints could be expressed consistently in normalized coordinates.
+
 
 Step responses were extracted from the measured data by detecting changes in the input signal. The corresponding temperature responses were aligned in time and scaled according to the input step size. The normalized step responses are shown in Figure~\ref{fig:normalized_steps}. Minor differences between individual responses are present, but the dominant dynamics are consistent.
 
@@ -131,31 +170,23 @@ Since this metric is evaluated for open-loop prediction, it is denoted in the fo
 \end{equation}
 
 
-This value is a direct measure of model accuracy, reflecting the model's ability to predict the process output in open-loop conditions. The results indicate that the model captures the main thermal dynamics of the heat exchanger. However, prediction errors accumulate over time due to nonlinearities and unmodeled disturbances \cite{ljung_sysid}. The identified linear model is valid primarily around the operating region and may lose accuracy for larger deviations from this region due to nonlinear effects.
-Although the model is sufficient for basic control design, this limitation motivates the use of more expressive data-driven models, such as the Koopman-based approach introduced in the following sections.
+This value is a direct measure of model accuracy, reflecting the model's ability to predict the process output in open-loop conditions. The results indicate that the model captures the main thermal dynamics of the heat exchanger. The identified first-order linear model is valid primarily around the operating region and may lose accuracy for larger deviations from this region due to nonlinear effects.
+Although the model is sufficient for basic control design, this limitation motivates the use of more advanced data-driven models, such as the Koopman-based approach introduced in the following sections.
 
 \subsection{Koopman-based Identification of a Heat Exchanger}
 \label{sec:koopman_identification}
 
 This subsection summarizes how the Koopman prediction model used later for control was obtained. While Section~\ref{sec:Koopman_operator} presents the general Koopman framework, here we focus on the specific model structure, training setup, and how the final state-space matrices were extracted.
 
-The identification was carried out using the \texttt{Neuromancer} framework~\cite{neuromancer2022}, which enables efficient training of data-driven dynamical models. Before training, the measured output and input signals were standardized using precomputed \texttt{StandardScaler} objects, defined by the mean and standard deviation of the training data. This is a standard practice used to improve numerical conditioning during neural network training \cite{goodfellow2016deep}. The scaling parameters used in this work were
-\begin{equation}
-\mu_y = 59.0676, \qquad \sigma_y = 6.9122,
-\label{eq:output_scaling_parameters}
-\end{equation}
-\begin{equation}
-\mu_u = 65.8447, \qquad \sigma_u = 22.9062.
-\label{eq:input_scaling_parameters}
-\end{equation}
+The identification was carried out using the \texttt{Neuromancer} framework~\cite{neuromancer2022}, which enables efficient training of data-driven dynamical models. The measured input and output signals were normalized according to Equation~\eqref{eq:data_scaling}, using the scaling parameters given in Equations~\eqref{eq:output_scaling_parameters} and~\eqref{eq:input_scaling_parameters}. This improves numerical conditioning during neural network training and ensures that the identified Koopman model is expressed in normalized coordinates~\cite{goodfellow2016deep}.
 
 
 
-We used an encoder--decoder architecture with control inputs. The measured outlet temperature $y_k$ was lifted to a latent state $z_k \in \mathbb{R}^{n_z}$ with $n_z = 10$ using a fully connected multi-layer perceptron with three hidden layers $[60,\,60,\,60]$ and ReLU activations. The input $u_k$ was mapped to the same latent dimension by a linear layer without bias.
+The implemented model follows the Deep Koopman encoder--linear dynamics--decoder structure described in Section~\ref{sec:deep_koopman}. The measured outlet temperature $y_k$ was lifted to a latent state $z_k \in \mathbb{R}^{n_z}$ with $n_z = 10$ using a fully connected multi-layer perceptron with three hidden layers $[60,\,60,\,60]$ and ReLU activations. The scalar control input $u_k$ was included through the matrix $B_{\mathcal K}$ in the lifted state equation.
 
-The latent dynamics were represented by the controlled Koopman model given in Equation~\eqref{eq:koopman_state}, where $A_{\mathcal K}$ corresponds to a trainable linear layer and $B_{\mathcal K}$ represents the influence of the control input in the lifted space. The output was reconstructed by the linear decoder given in Equation~\eqref{eq:koopman_output}. The Koopman matrices used later in MPC correspond directly to the learned network weights. The total number of trainable parameters was $8170$.
+The latent dynamics were represented by the controlled Koopman model given in Equation~\eqref{eq:koopman_state}, where $A_{\mathcal K}$ corresponds to a trainable linear layer and $B_{\mathcal K}$ represents the influence of the control input in the lifted space. The output was reconstructed by a linear decoder, which corresponds directly to the output matrix $C_{\mathcal K}$ in Equation~\eqref{eq:koopman_output}. The Koopman matrices used later in MPC therefore correspond directly to the learned network weights. The total number of trainable parameters was $8170$.
 
-Training was performed on data segments of $n_{\mathrm{steps}} = 50$ and mini-batches of size $b_s = 100$. The Adam optimizer was employed with a learning rate of $10^{-3}$ and a fixed random seed, following best practices in neural network training \cite{kingma2015adam}. The maximum number of epochs was set to $900$, with early stopping based on the development loss, a patience of $200$ epochs, and a warmup period of $100$ epochs. The training duration was approximately $35$ minutes on a single GPU.
+Training was performed on data segments of $n_{\mathrm{steps}} = 50$ and mini-batches of size $b_s = 100$. The Adam optimizer was employed with a learning rate of $10^{-3}$ and a fixed random seed, following best practices in neural network training \cite{kingma2015adam}. The maximum number of epochs was set to $900$, with early stopping based on the validation loss, a patience of $200$ epochs, and a warmup period of $100$ epochs. The training duration was approximately $35$ minutes on a single GPU.
 
 The measured dataset was split into training and testing parts for model validation. In contrast, the parameters of the linear model were obtained from averaged step responses computed from the measured data. The raw measured input and output signals used for identification are shown in Figure~\ref{fig:raw_measurements}.
 
