@@ -297,7 +297,7 @@ A representative example of the simulation is shown in Figure~\ref{fig:cl_respon
 \begin{figure}[!t]
     \centering
     \includegraphics[width=0.95\textwidth]{images/IC_01_y0_45_00.png}
-    \caption{Closed-loop response and control input comparison for Koopman MPC and MPC based on the linear model identified from step response for the initial condition $T_0 = 45\,^{\circ}\mathrm{C}$. This case illustrates that both controllers regulate the simulated plant to the steady-state operating region, also from a large initial deviation.}
+    \caption{Closed-loop response and control input comparison for Koopman MPC and MPC based on the linear model identified from step response (Linear MPC) for the initial condition $T_0 = 45\,^{\circ}\mathrm{C}$. This case illustrates that both controllers regulate the simulated plant to the steady-state operating region, also from a large initial deviation.}
     \label{fig:cl_response45}
 \end{figure}
 
@@ -324,7 +324,7 @@ Table~\ref{tab:performance_metrics} summarizes the results for all tested initia
     \hline
     \multirow{2}{*}{$T_0$ [$^\circ$C]} &
     \multicolumn{3}{c|}{Koopman MPC} &
-    \multicolumn{3}{c}{Linear step-response MPC} \\
+    \multicolumn{3}{c}{Linear MPC} \\
      & RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ &
      RMSE [$^\circ$C] & IAE & $J_{\mathrm{CL}}$ \\
     \hline
