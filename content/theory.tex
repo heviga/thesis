@@ -69,16 +69,27 @@ A commonly used method for approximating the Koopman operator from data is the E
 \section{Deep Koopman}
 \label{sec:deep_koopman}
 
-In this work, a Deep Koopman approach is used instead, where the lifting function is learned directly from data using a neural network~\cite{lusch2018deep,yeung2019learning,otto2019linearly}. This allows the lifting transformation to adapt automatically to the system dynamics without requiring manual selection of basis functions.
+In this work, a Deep Koopman approach is used, where the lifting function is learned directly from data using a neural network~\cite{lusch2018deep,yeung2019learning,otto2019linearly}. This allows the lifting transformation to adapt to the measured system dynamics without requiring manual selection of basis functions.
 
-The Deep Koopman model used in this work follows an encoder--linear dynamics--decoder structure. The lifting transformation is implemented as
+The model follows an encoder--linear dynamics--decoder structure. The encoder maps the measured output to a lifted state
 \begin{equation}
 z_k = f_y(y_k),
 \label{eq:koopman_encoder}
 \end{equation}
-where $f_y(\cdot)$ is a trainable mapping.
+where $f_y(\cdot)$ is a trainable nonlinear mapping. In the implemented model, the encoder is a fully connected neural network with three hidden layers of 60 neurons each and maps the measured output $y_k$ to a lifted state $z_k \in \mathbb{R}^{10}$.
 
-Figures~\ref{fig:encoder_network} and~\ref{fig:decoder_network} show a schematic example of the encoder and decoder architecture used in this work. In the implemented model, the encoder maps the measured output $y_k$ to a lifted state $z_k \in \mathbb{R}^{10}$ by means of a fully connected neural network with three hidden layers of 60 neurons each. The decoder then maps the lifted state back to the predicted output.
+
+The evolution of the lifted state is described by the finite-dimensional Koopman model as in Equation~\eqref{eq:koopman_state}, where $A_{\mathcal K}$ represents the linear dynamics in the lifted space and $B_{\mathcal K}$ describes the influence of the control input.
+
+
+The predicted output is obtained using a decoder,
+\begin{equation}
+\hat{y}_k = f_{\mathrm{dec}}(z_k).
+\label{eq:koopman_decoder}
+\end{equation}
+In this work, the decoder is linear. Therefore, it corresponds directly to the output matrix $C_{\mathcal K}$ and the output equation can be written as in Equation~\eqref{eq:koopman_output}.
+
+Figures~\ref{fig:encoder_network} and~\ref{fig:decoder_network} show schematic examples of the encoder and decoder used in this work.
 
 \begin{figure}[htbp]
     \centering
