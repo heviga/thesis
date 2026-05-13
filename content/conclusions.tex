@@ -89,6 +89,8 @@ A = 0.985, \qquad B = 0.016, \qquad C = 1, \qquad D = 0.
 \label{eq:strejc_discrete_matrices}
 \end{equation}
 The resulting discrete-time prediction model is therefore
+
+Substituting the identified parameters into the discrete-time model introduced in equation~\eqref{eq:strejc_state} and \eqref{eq:strejc_state2} yields the following representation:
 \begin{equation}
 x_{k+1} = 0.985\,x_k + 0.016\,u_k,
 \qquad
@@ -96,18 +98,12 @@ y_k = x_k.
 \label{eq:strejc_discrete_model}
 \end{equation}
 
-Substituting the identified parameters into the discrete-time model introduced in equation~\eqref{eq:strejc_state} and \eqref{eq:strejc_state2} yields the following representation:
-\begin{equation}
-x_{k+1} = 0.985\,x_k + 0.016\,u_k,
-\qquad
-y_k = x_k.
-\end{equation}
-
 The identified linear model was subsequently used as the prediction model in the baseline MPC design, following common practice in industrial control applications \cite{rawlings_mpc}.
 
 To evaluate the model's predictive capability, an open-loop simulation was performed on the test dataset. In this setting, the measured input signal was applied directly to the model, while the output was not corrected using measurements. The resulting trajectory, therefore, represents a pure model prediction driven only by the input signal and the initial condition.
 
-The model parameters were identified using the complete dataset. For validation, the data were split, and the second part of the experiment, starting at $t = 2250~\mathrm{s}$, was used for open-loop testing.
+For open-loop validation, the measured data were divided into two parts. 
+The first part was used for identification, while the second part of the experiment, starting at $t = 2250~\mathrm{s}$, was used to evaluate the prediction performance on a different section of the measured trajectory.
 
 The predicted output $\hat{y}_k$ was compared with the measured outlet temperature $y_k = T_4$, and the prediction error was first quantified using the mean square error (MSE),
 \begin{equation}
@@ -127,9 +123,8 @@ The root mean square error (RMSE) was then computed as
 \left( y_k - \hat{y}_k \right)^2}.
 \label{eq:rmse}
 \end{equation}
-The RMSE was computed in physical units after reversing the data scaling.
-
-For the identified linear model, the overall open-loop RMSE$_{\mathrm{OL}}$ obtained on the test data was
+The RMSE was computed in physical units, i.e., in degrees Celsius, so that the prediction error can be directly interpreted with respect to the measured outlet temperature.
+Since this metric is evaluated for open-loop prediction, it is denoted in the following as $\mathrm{RMSE}_{\mathrm{OL}}$. For the identified first-order linear model, the obtained value on the test data was
 \begin{equation}
 \mathrm{RMSE}_{\mathrm{OL}} = 1.6962~^{\circ}\mathrm{C}.
 \label{eq:rmseOL}
