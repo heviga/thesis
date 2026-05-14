@@ -71,7 +71,7 @@ A commonly used method for approximating the Koopman operator from data is the E
 
 In this work, a Deep Koopman approach is used, where the lifting function is learned directly from data using a neural network~\cite{lusch2018deep,yeung2019learning,otto2019linearly}. This allows the lifting transformation to adapt to the measured system dynamics without requiring manual selection of basis functions.
 
-The model follows an encoder--linear dynamics--decoder structure. The encoder maps the measured output to a lifted state
+The model follows an encoder--linear dynamics--decoder structure~\cite{goodfellow2016deep}. The encoder maps the measured output to a lifted state
 \begin{equation}
 z_k = f_y(y_k),
 \label{eq:koopman_encoder}
@@ -333,7 +333,7 @@ The resulting Koopman model is then represented as a linear state-space system i
 \section{Kalman Filter}
 \label{sec:KF}
 
-The Kalman filter (KF) is a state-estimation method that uses a mathematical model and noisy measurements to estimate the internal states of dynamic systems. In control applications, it provides reliable state estimates for feedback controllers, particularly when not all system states are directly measurable \cite{kalman1960,morari1999}.
+The Kalman filter (KF) is a state-estimation method that uses a mathematical model and noisy measurements to estimate the internal states of dynamic systems. In control applications, it provides reliable state estimates for feedback controllers, particularly when not all system states are directly measurable \cite{kalman1960,morari1999}. In Koopman-based MPC, the lifted states are generally not directly measurable and therefore require an estimate for feedback control~\cite{valabek2026experimental}.
 
 Consider a discrete-time linear system with process and measurement noise described by
 \begin{equation}
@@ -376,9 +376,9 @@ In this work, the Kalman filter is used to estimate the system state required by
 \section{Model Predictive Control}
 \label{sec:MPC}
 
-Model Predictive Control (MPC) is an advanced control strategy based on repeatedly solving a constrained finite-horizon optimization problem \cite{rawlings_mpc}. At each sampling instant, a prediction model is used to predict future system behavior over a predefined prediction horizon, and an optimal sequence of control inputs is computed.
+Model Predictive Control (MPC) is an advanced control strategy based on repeatedly solving a constrained finite-horizon optimization problem \cite{rawlings_mpc,martin2019mpc}. At each sampling instant, a prediction model is used to predict future system behavior over a predefined prediction horizon, and an optimal sequence of control inputs is computed.
 
-MPC operates according to the receding horizon principle. Although an optimal input sequence is computed over the prediction horizon, only the first control input is applied to the system. At the next sampling instant, the optimization problem is solved again using updated state estimates.
+MPC operates according to the receding horizon principle. Although an optimal input sequence is computed over the prediction horizon, only the first control input is applied to the system \cite{martin2019mpc}. At the next sampling instant, the optimization problem is solved again using updated state estimates.
 
 In this work, MPC is formulated for discrete-time linear systems described by the state-space model
 \begin{equation}
@@ -430,7 +430,7 @@ The control objective is to regulate to a steady-state operating point. This obj
     where $N$ denotes the prediction horizon, and $\hat{x}_{t}$ is the estimated system state at the current sampling instant $t$. The index $k = 0,\ldots,N-1$ denotes the prediction step within the horizon. The matrices $Q \succeq 0$ and $R \succ 0$ are weighting matrices. The matrix $Q$ determines the importance of output regulation, while $R$ penalizes aggressive control actions.
 
 
-Input and output constraints reflect physical and operational limitations of the controlled system. In thermal processes, input constraints typically represent actuator saturation, while output constraints are used to keep temperatures within safe operating limits \cite{rawlings_mpc, mpc_heat_exchanger}.
+Input and output constraints reflect physical and operational limitations of the controlled system. In thermal processes, input constraints typically represent actuator saturation, while output constraints are used to keep temperatures within safe operating limits \cite{rawlings_mpc, martin2019mpc}.
 
 The prediction horizon $N$ affects both control performance and computational complexity. In practical implementations, its value is chosen to balance prediction accuracy with real-time computational demands \cite{rawlings_mpc}. 
 % In this thesis, $N = 20$ was selected based on empirical results.

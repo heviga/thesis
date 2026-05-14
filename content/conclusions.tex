@@ -25,7 +25,7 @@ The experimental setup is shown in Figure~\ref{fig:pct23_plant}. The plate heat 
 
 The system is treated as a SISO system with the outlet temperature of the heated water from the heat exchanger, denoted as $T_4$, as the controlled output and the hot-circuit pump control signal, denoted as Pump~F, as the manipulated input. In the experimental setup, signal of Pump~F is specified as a relative value in percent. According to the PCT23 specification, the heating-fluid flow-rate range is $0$--$600~\mathrm{ml/min}$. In this work, Pump~F is used as a relative input in percent and is referred to as the pump speed. The input therefore does not represent electrical pump power in watts, but the relative pump setting that affects the hot-water flow rate and the heat transfer rate. The control input was constrained to the operating range used in the experiments, namely $20$--$100~\%$. The signal of the pump for the cold liquid was kept constant at $50~\%$.
 
-The main aim of the practical part is to identify suitable models of the heat exchanger process from experimental data, design MPC controllers using both a classical first-order model and a data-driven Koopman model, and compare their closed-loop performance under identical constraints in both simulation and real-time operation on the PCT23 system. This comparative methodology has been adopted in recent literature for benchmarking advanced control strategies \cite{benchmark_mpc2021}.
+The main aim of the practical part is to identify suitable models of the heat exchanger process from experimental data, design MPC controllers using both a classical first-order model and a data-driven Koopman model, and compare their closed-loop performance under identical constraints in both simulation and real-time operation on the PCT23 system. This comparative methodology has been adopted in recent literature as advanced control strategies \cite{bieker2020deep,rodriguez2021latest}.
 
 
 
@@ -182,7 +182,7 @@ Although the model is sufficient for basic control design, this limitation motiv
 
 This subsection summarizes how the Koopman prediction model used later for control was obtained. While Section~\ref{sec:Koopman_operator} presents the general Koopman framework, here we focus on the specific model structure, training setup, and how the final state-space matrices were extracted.
 
-The identification was carried out using the \texttt{Neuromancer} framework~\cite{neuromancer2022}, which enables efficient training of data-driven dynamical models. The measured input and output signals were normalized according to Equation~\eqref{eq:data_scaling}, using the scaling parameters given in Equations~\eqref{eq:output_scaling_parameters} and~\eqref{eq:input_scaling_parameters}. This improves numerical conditioning during neural network training and ensures that the identified Koopman model is expressed in normalized coordinates~\cite{goodfellow2016deep}.
+The identification was carried out using the \texttt{Neuromancer} framework~\cite{neuromancer2022}, which enables efficient training of data-driven dynamical models. The measured input and output signals were normalized according to Equation~\eqref{eq:data_scaling}, using the scaling parameters given in Equations~\eqref{eq:output_scaling_parameters} and~\eqref{eq:input_scaling_parameters}. This improves numerical conditioning during neural network training and ensures that the identified Koopman model is expressed in normalized coordinates~\cite{sola1997importance}.
 
 
 
