@@ -2,7 +2,7 @@
 \addcontentsline{toc}{chapter}{Introduction}
 
 \label{ch:introduction}
-Heat exchangers are key devices in industrial and energy systems that often need precise temperature control. Their slow dynamics, operational constraints, and nonlinear behavior make control challenging, especially for tzpical industrial methods. These factors drive the adoption of advanced control strategies.
+Heat exchangers are key devices in industrial and energy systems that often need precise temperature control. Their slow dynamics, operational constraints, and nonlinear behavior make control challenging, especially for typical industrial methods. These factors drive the adoption of advanced control strategies.
 
 Model Predictive Control (MPC) has become a standard approach for controlling constrained systems in process engineering. 
 Its theoretical foundations are well established in the literature, where MPC is formulated as a finite-horizon optimization problem that explicitly incorporates system constraints \cite{rawlings_mpc}. 
@@ -25,9 +25,6 @@ configurations \cite{mpc_heat_exchanger}.
 
 Although such models perform well near a nominal operating point, their accuracy decreases in the presence of nonlinearities. This limitation motivates the adoption of more advanced modeling approaches for predictive control \cite{morari1999} and has led to increased research interest in data-driven and nonlinear modeling techniques.
 
-Data-driven modeling provides an alternative to classical first-principles and step-response-based approaches.  Rather than relying on physical laws or simplified assumptions, data-driven methods construct system representations directly from measured input--output data. 
-This approach captures complex and nonlinear system behavior more accurately, particularly when physical modeling is challenging or when the system operates over a broad range of conditions. 
-\cite{morari1999}.
 
 Data-driven modeling provides an alternative to classical first-principles and step-response-based approaches. Rather than relying only on physical laws or simplified assumptions, data-driven methods construct system representations directly from measured input--output data. This approach can be useful for thermal systems, where nonlinear heat transfer, changing operating conditions, and unmeasured disturbances make just physical modeling difficult \cite{morari1999}.
 
@@ -43,7 +40,7 @@ A key aspect of the Koopman framework is the lifting function
 $g(\cdot)$, which maps the original system states or measurements into a higher-dimensional space. In this lifted space, nonlinear dynamics can be represented by a linear prediction model. The selection or construction of the lifting function is therefore critical to the accuracy of the resulting Koopman model.
 
 
-Various strategies for constructing the lifting function $g(\cdot)$ have been proposed in the literature. Early data-driven approaches utilized predefined dictionaries of basis functions, such as polynomials, radial basis functions, or Fourier modes. Extended Dynamic Mode Decomposition (EDMD) is a well-known example, approximating the Koopman operator using linear regression in a specified function space \cite{williams2015}. The effectiveness of such methds depends on the selected dictionary and can be constrained for complex or high-dimensional systems.
+Various strategies for constructing the lifting function $g(\cdot)$ have been proposed in the literature. Early data-driven approaches utilized predefined dictionaries of basis functions, such as polynomials, radial basis functions, or Fourier modes. Extended Dynamic Mode Decomposition (EDMD) is a well-known example, approximating the Koopman operator using linear regression in a specified function space \cite{williams2015}. The effectiveness of such methods depends on the selected dictionary and can be constrained for complex or high-dimensional systems.
 
 Recent research has increasingly focused on learning the lifting function directly from data. Brunton, Proctor, and Kutz~\cite{brunton2016} demonstrated that sparse data-driven representations can identify system dynamics in the absence of explicit physical models. Building on this foundation, Korda and Mezi\'c~\cite{korda2018} introduced Koopman-based linear predictors for nonlinear systems and established their applicability in optimal control problems.
 Neural-network-based lifting functions have further advanced this approach by providing flexible representations of nonlinear dynamics while retaining a linear structure suitable for control design \cite{koopman_mpc_review}.
@@ -51,7 +48,7 @@ Neural-network-based lifting functions have further advanced this approach by pr
 
 The Koopman framework has also been incorporated into MPC frameworks \cite{korda2018}.
 In Koopman-based MPC, the learned linear model is employed directly within the MPC optimization problem, allowing nonlinear system behaviors to be represented using a linear prediction model. 
-This integration enables direct comparison of Koopman-based MPC and classical first-order linear MPC under identical constraints and cost functions. This thesis ivestigates how Koopman-based modelling influences control performance.
+This integration enables direct comparison of Koopman-based MPC and classical first-order linear MPC under identical constraints and cost functions. This thesis investigates how Koopman-based modelling influences control performance.
 
 
 Applications of Koopman-based MPC to thermal systems have been demonstrated in several recent studies. For example,  Koopman–Model Predictive Control was implemented in a warm-water supply system, where a data-driven linear Koopman model regulated outlet temperature under variable demand and operating conditions, resulting in improved tracking and constraint handling compared to conventional control approaches \cite{miyashita2022koopman}.
