@@ -23,7 +23,7 @@ The experimental setup is shown in Figure~\ref{fig:pct23_plant}. The plate heat 
 \end{figure}
 \FloatBarrier
 
-The system is treated as a SISO system with the outlet temperature of the heated water from the heat exchanger, denoted as $T_4$, as the controlled output and the hot-circuit pump control signal, denoted as Pump~F, as the manipulated input. In the experimental setup, signal of Pump~F is specified as a relative value in percent. According to the PCT23 specification, the heating-fluid flow-rate range is $0$--$600~\mathrm{ml/min}$. In this work, Pump~F is used as a relative input in percent and is referred to as the pump speed. The input therefore does not represent electrical pump power in watts, but the relative pump setting that affects the hot-water flow rate and the heat transfer rate. The control input was constrained to the operating range used in the experiments, namely $20$--$100~\%$. The signal of the pump for the cold liquid was kept constant at $50~\%$.
+The system is treated as a SISO system with the outlet temperature of the heated water from the heat exchanger, denoted as $T_4$, as the controlled output and the hot-circuit pump control signal, denoted as Pump~F, as the manipulated input. According to the PCT23 specification, the heating-fluid flow-rate range is $0$--$600~\mathrm{ml/min}$. In this work, Pump~F is used as a relative input in percent and is referred to as the pump speed. The input therefore does not represent electrical pump power in watts, but the relative pump setting that affects the hot-water flow rate and the heat transfer rate. The control input was constrained to the operating range used in the experiments, namely $20$--$100~\%$. The signal of the pump for the cold liquid was kept constant at $50~\%$.
 
 The main aim of the practical part is to identify suitable models of the heat exchanger process from experimental data, design MPC controllers using both a classical first-order model and a data-driven Koopman model, and compare their closed-loop performance under identical constraints in both simulation and real-time operation on the PCT23 system. This comparative methodology has been adopted in recent literature as advanced control strategies \cite{bieker2020deep,rodriguez2021latest}.
 
@@ -109,7 +109,7 @@ Step responses were extracted from the measured data by detecting changes in the
 \subsection{First-order Linear Identification of the Heat Exchanger}
 \label{sec:strejc_ident}
 
-An average normalized step response was obtained by averaging all valid normalized responses from the identification dataset. This averaged response provides a representative description of the dominant process dynamics and is used to identify a simple linear model. The resulting average step response is shown in Figure~\ref{fig:avg_step}.
+An average normalized step response was computed by taking the mean of all valid normalized responses from the identification dataset. This averaged response serves as a representative characterization of the main process dynamics and is used for simple linear model identification. The resulting average step response is presented in Figure~\ref{fig:avg_step}.
 
 \begin{figure}[htbp]
     \centering
@@ -133,7 +133,7 @@ A = 0.985, \qquad B = 0.016, \qquad C = 1, \qquad D = 0.
 \end{equation}
 The resulting discrete-time prediction model is therefore
 
-Substituting the identified parameters into the discrete-time model introduced in equation~\eqref{eq:strejc_state} and \eqref{eq:strejc_state2} yields the following representation:
+By inserting the identified parameters into the discrete-time model defined in equations~\eqref{eq:strejc_state} and \eqref{eq:strejc_state2}, the following representation is obtained:
 \begin{equation}
 x_{k+1} = 0.985\,x_k + 0.016\,u_k,
 \qquad
@@ -141,7 +141,7 @@ y_k = x_k.
 \label{eq:strejc_discrete_model}
 \end{equation}
 
-The identified linear model was subsequently used as the prediction model in the baseline MPC design, following common practice in industrial control applications \cite{rawlings_mpc}.
+The identified linear model was subsequently used as the prediction model in the MPC design, following common practice in industrial control applications \cite{rawlings_mpc}.
 
 To evaluate the model's predictive capability, an open-loop simulation was performed on the test dataset. In this setting, the measured input signal was applied directly to the model, while the output was not corrected using measurements. The resulting trajectory, therefore, represents a pure model prediction driven only by the input signal and the initial condition.
 
@@ -166,13 +166,13 @@ The root mean square error (RMSE) was then computed as
 \left( y_k - \hat{y}_k \right)^2}.
 \label{eq:rmse}
 \end{equation}
-The RMSE was computed in physical units, i.e., in degrees Celsius, so that the prediction error can be directly interpreted with respect to the measured outlet temperature.
-Since this metric is evaluated for open-loop prediction, it is denoted in the following as $\mathrm{RMSE}_{\mathrm{OL}}$. For the identified first-order linear model, the obtained value on the test data was
+
+
+The RMSE was calculated in physical units (degrees Celsius), allowing the prediction error to be directly interpreted relative to the measured outlet temperature. Since this metric is assessed for open-loop prediction, it is denoted as $\mathrm{RMSE}_{\mathrm{OL}}$ in the following. For the identified first-order linear model, the value obtained on the test dataset was
 \begin{equation}
 \mathrm{RMSE}_{\mathrm{OL}} = 1.6962~^{\circ}\mathrm{C}.
 \label{eq:rmseOL}
 \end{equation}
-
 
 This value is a direct measure of model accuracy, reflecting the model's ability to predict the process output in open-loop conditions. The results indicate that the model captures the main thermal dynamics of the heat exchanger. The identified first-order linear model is valid primarily around the operating region and may lose accuracy for larger deviations from this region due to nonlinear effects.
 Although the model is sufficient for basic control design, this limitation motivates the use of more advanced data-driven models, such as the Koopman-based approach introduced in the following sections.
@@ -269,8 +269,7 @@ with weights $Q = 10$ and $R = 1$. The weights were selected empirically to bala
 
 
 
-Input and output constraints were enforced directly in the optimization
-problem. The pump speed was limited to the interval
+Input and output constraints were incorporated directly into the optimization problem. The pump speed was restricted to the range
 \[
 20~\% \leq u_k \leq 100~\%,
 \]
@@ -278,8 +277,7 @@ and the outlet temperature was constrained to
 \[
 0~^\circ\mathrm{C} \leq y_k \leq 70~^\circ\mathrm{C}.
 \]
-
-The resulting quadratic program was solved online using the \texttt{quadprog} solver via the YALMIP~\cite{lofberg2004yalmip} optimization framework.
+The resulting quadratic program was solved online using the \texttt{quadprog} solver within the YALMIP optimization framework \cite{lofberg2004yalmip}.
 
 \subsection{Linear-based MPC}
 
@@ -322,7 +320,7 @@ where $f^{\mathrm{b}}_{\mathrm{dec}}(\cdot)$ denotes the decoder network of the 
 
 It is important to note that these closed-loop simulations are primarily intended to verify that both predictive controllers can drive the simulated plant to the desired steady-state region in a stable and consistent manner. The simulation study serves mainly as a comparative validation of controller behavior on a common reference model, rather than an exact replication of the real experimental device.
 
-A representative example of the simulation is shown in Figure~\ref{fig:cl_response45} for the initial temperature $T_0 = 45,^{\circ}\mathrm{C}$, i.e., for an initial condition significantly below the steady-state operating region. In this case, both controllers first apply a strong control action at the actuator limit and then gradually reduce the input as the output approaches steady state. The responses show that both MPC formulations can regulate the system from a large initial deviation toward the steady-state. 
+A representative example of the simulation is shown in Figure~\ref{fig:cl_response45} for the initial temperature $T_0 = 45,^{\circ}\mathrm{C}$, i.e., for an initial condition significantly below the steady-state operating region. The primary goal of the simulation study is to provide a comparative assessment of controller performance using a shared reference model, rather than to exactly replicate the behavior of the actual experimental setup.
 
 \begin{figure}[!htbp]
     \centering
@@ -339,13 +337,13 @@ To evaluate closed-loop performance, three metrics were considered: root mean sq
 \end{equation}
 where $y(k)$ denotes the outlet temperature at time step $k$, $y_{\mathrm{ss}}$ is the steady-state operating point, and $N_{\mathrm{sim}}$ is the simulation length.
 
-Each metric looks at a different piece of how the closed-loop system behaves. RMSE highlights big swings away from the steady-state—since the errors are squared, the metric puts more weight on large deviations. This helps when trying to determine how severe the prevailing transient errors are. IAE, on the other hand, tracks the total absolute error over the whole simulation. It is less influenced by isolated spikes, so it's useful for understanding not just how much, but how long the system strays from its target. Then, the closed-loop objective, $J_{\mathrm{CL}}$, is rooted in the quadratic criterion from the MPC setup. That combines both how far the system deviates and how much control effort it takes, giving a clear sense of the overall cost relative to the controller's target.
+Each metric looks at a different piece of how the closed-loop system behaves. RMSE highlights  large deviations from the steady-state, since the errors are squared, the metric puts more weight on large deviations. This helps when trying to determine how severe the prevailing transient errors are. IAE, on the other hand, tracks the total absolute error over the whole simulation. It is less influenced by isolated spikes, so it's useful for knowing not just how much, but how long the system strays from its target. Then, the closed-loop objective, $J_{\mathrm{CL}}$, is rooted in the quadratic criterion from the MPC setup. That combines both how far the system deviates and how much control effort it takes, giving a clear sense of the overall cost relative to the controller's target.
 
 For the initial condition $T_0 = 45\,^{\circ}\mathrm{C}$, the Koopman MPC achieved $\mathrm{RMSE}=4.58\,^{\circ}\mathrm{C}$, $\mathrm{IAE}=358.28$, and $J_{\mathrm{CL}}=563.53$, whereas the MPC based on the linear model identified from the step response achieved $\mathrm{RMSE}=4.62\,^{\circ}\mathrm{C}$, $\mathrm{IAE}=380.57$, and $J_{\mathrm{CL}}=562.36$. Although the quadratic objective values are almost identical in this case, the Koopman MPC yields slightly smaller tracking errors in both RMSE and IAE.
 
-When averaged over all tested initial conditions, the mean RMSE is $1.59\,^{\circ}\mathrm{C}$ for the Koopman MPC and $1.65\,^{\circ}\mathrm{C}$ for the linear-model-based MPC. This corresponds to an improvement of approximately $3.6\,\%$ in RMSE. The mean IAE values are $115.77$ and $130.41$, respectively, which represents a reduction of approximately $11.2\,\%$ for the Koopman MPC. The mean closed-loop objective values are $131.37$ and $131.79$, corresponding to a difference of only about $0.3\,\%$.
+When averaged over all tested initial conditions, the mean RMSE is $1.59\,^{\circ}\mathrm{C}$ for the Koopman MPC and $1.65\,^{\circ}\mathrm{C}$ for the linear-model-based MPC. This corresponds to an improvement of approximately $3.6\,\%$ in RMSE. The mean IAE values are $115.77$ and $130.41$, respectively, which represents a reduction of approximately $11.2\,\%$ for the Koopman MPC. The mean closed-loop objective values are $131.37$ and $131.79$, which corresponds to a difference of only about $0.3\,\%$.
 
-Table~\ref{tab:performance_metrics} summarizes the results for all tested initial temperatures. For initial conditions close to the operating point, both controllers achieve very small tracking errors. As the initial temperature moves further from the reference, both RMSE and IAE increase, as expected due to larger transient deviations and stronger control action requirements.
+Table~\ref{tab:performance_metrics} presents the results for all tested initial temperatures. For initial conditions close to the operating point, both controllers achieve very small tracking errors. As the initial temperature moves further from the reference, both RMSE and IAE increase, as expected due to larger transient deviations and stronger control action requirements.
 
 \begin{table}[!htbp]
     \centering
@@ -378,7 +376,7 @@ Table~\ref{tab:performance_metrics} summarizes the results for all tested initia
 
 The same trend can be observed for both controllers. When the initial temperature is close to the operating point, the transient deviation is small and the RMSE and IAE values remain low. For larger initial deviations, the response takes longer to reach the steady-state region, which leads to higher accumulated errors. A similar trend is also reflected in the closed-loop objective value.
 
-The results do not indicate a strong dominance of one controller over the other across all operating conditions. However, the Koopman MPC achieves slightly lower RMSE across all tested initial temperatures and lower IAE in every case. This suggests that the Koopman-based prediction model provides a slightly better overall tracking quality on the considered simulation plant, even though the differences remain relatively small.
+The results do not show a clear superiority of one controller across all operating conditions. However, the Koopman MPC achieves slightly lower RMSE across all tested initial temperatures and lower IAE in every case. This suggests that the Koopman-based prediction model provides a slightly better overall tracking quality on the considered simulation plant, even though the differences remain relatively small.
 All three performance metrics are also visualized in Figure~\ref{fig:sim_metrics_summary}.
 
 \begin{figure}[!htbp]
@@ -481,7 +479,7 @@ RMSE & IAE & $J_{\mathrm{CL}}$ \\
 
 
 
-The experimental results can be explained by the different properties of the two prediction models and by the behavior of the real heat exchanger. The real system contains nonlinear heat-transfer effects, measurement noise, actuator limitations, and small disturbances from the hydraulic and thermal circuits. These effects are not captured perfectly by either prediction model, which explains why the experimental responses differ more than the simulation responses.
+The experimental results can be attributed to the different properties of the two prediction models and by the behavior of the real heat exchanger. The real system contains nonlinear heat-transfer effects, measurement noise, actuator limitations, and small disturbances from the hydraulic and thermal circuits. These effects are not captured perfectly by either prediction model, which explains why the experimental responses differ more than the simulation responses.
 
 Koopman MPC usually achieves a lower IAE because its lifted prediction model captures the process's transient nonlinear behavior more accurately. This helps the controller lower the tracking error throughout the experiment. At the same time, this property makes the Koopman controller react more quickly to any deviation from the operating point. So, if the measured temperature drops below the steady-state target, the controller pushes a stronger input and tends to stay near the actuator limit longer. The error drops quickly, but that same aggressiveness can lead to overshoot and sometimes a slightly higher RMSE, like in the case where $T_0 = 55\,^{\circ}\mathrm{C}$.
 
@@ -513,7 +511,7 @@ For each experiment, the transient interval was defined from the initial
 sample until this time. The following metrics were evaluated over this
 interval:
 
-The transient response was evaluated using several complementary metrics. The settling time was defined as the first time instant at which the output enters the settling band around the target value and remains within this band for at least $N_{\mathrm{hold}} = 5$ consecutive samples. The integral of absolute error (IAE) was evaluated according to Equation~\eqref{eq:iae}.
+The transient response was evaluated using several complementary metrics. The settling time was defined as the earliest time the output enters the settling band around the target value and stays within this band for at least $N_{\mathrm{hold}} = 5$ consecutive samples. The integral of absolute error (IAE) was evaluated according to Equation~\eqref{eq:iae}.
 
 The integral of squared error (ISE) was used to penalize larger transient deviations and was defined as
 \begin{equation}
@@ -681,6 +679,6 @@ The experimental results confirmed that both controllers can be applied to the r
 
 The results therefore show a trade-off between model simplicity and transient performance. The first-order MPC is easier to identify, interpret, and implement, and it is suitable when smooth behavior near the operating point is required. The Koopman-based MPC requires more careful identification, but it can improve transient regulation while preserving the same MPC formulation.
 
-In this work, the Koopman model was identified for a SISO configuration with a pump as the manipulated input and the outlet temperature as the controlled output. If the operating regime, input, or controlled variable changes significantly, the model should be re-identified using new measured data. However, the MPC formulation itself can remain unchanged, which is an important practical advantage of the Koopman-based approach.
+In this work, the Koopman model was identified for a SISO configuration with a pump as the manipulated input and the outlet temperature as the controlled output. If the operating regime, input, or controlled variable changes significantly, the model should be re-identified using new measured data. However, the MPC formulation itself can remain unchanged, represents a practical benefit of the Koopman-based method.
 
 Overall, the thesis demonstrates that Koopman-based MPC is a suitable extension of first-order step-response-based MPC for the control of nonlinear thermal systems. For the investigated plate heat exchanger, its main benefit was improved transient behavior, while both controllers maintained stable closed-loop regulation.

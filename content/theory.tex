@@ -332,7 +332,7 @@ The resulting Koopman model is then represented as a linear state-space system i
 \section{Kalman Filter}
 \label{sec:KF}
 
-The Kalman filter (KF) is a state-estimation method that uses a mathematical model and noisy measurements to estimate the internal states of dynamic systems. In control applications, it provides reliable state estimates for feedback controllers, particularly when not all system states are directly measurable \cite{kalman1960,morari1999}. In Koopman-based MPC, the lifted states are generally not directly measurable and therefore require an estimate for feedback control~\cite{valabek2026experimental}.
+The Kalman filter (KF) is a state-estimation method that uses a mathematical model and noisy measurements to estimate the internal states of dynamic systems. In control applications, it provides reliable state estimates for feedback controllers, particularly when not all system states are directly measurable \cite{kalman1960,morari1999}. In Koopman-based MPC, the lifted states are usually not directly measurable and therefore require an estimate for feedback control~\cite{valabek2026experimental}.
 
 Consider a discrete-time linear system with process and measurement noise described by
 \begin{equation}
@@ -345,9 +345,10 @@ y_k = C x_k + v_k,
 \end{equation}
 where $w_k$ and $v_k$ denote zero-mean Gaussian process and measurement noise, respectively.
 
-The KF computes an estimate of the system state in the minimum mean-square error sense under the assumption of Gaussian noise. The estimation algorithm consists of two main steps: prediction and correction. The notation $\hat{x}_{k|k}$ denotes the estimate of the system state at time $k$ given measurements up to time $k$, while $\hat{x}_{k|k-1}$ represents the predicted state estimate prior to incorporating the current measurement.
 
-In the prediction step, the state estimate and its covariance are propagated using the system model,
+The KF estimates the system state by minimizing the mean-square error, assuming the presence of Gaussian noise. The algorithm operates in two main phases: prediction and correction. Here, $\hat{x}_{k|k}$ refers to the state estimate at time $k$ based on all measurements up to that point, while $\hat{x}_{k|k-1}$ is the predicted state estimate before the current measurement is taken into account.
+
+During the prediction phase, the state estimate and its associated covariance are propagated using the system model,
 \begin{equation}
 \hat{x}_{k|k-1} = A \hat{x}_{k-1|k-1} + B u_{k-1},
 \end{equation}
@@ -356,7 +357,7 @@ P_{k|k-1} = A P_{k-1|k-1} A^\top + Q_{\mathrm{KF}},
 \end{equation}
 where $P_{k|k-1}$ denotes the prediction error covariance matrix, $Q_{\mathrm{KF}}$ is the process noise covariance matrix of the Kalman filter, and $u_{k-1}$ denotes the control input applied at the previous sampling instant.
 
-In the correction step, the predicted state estimate is updated using the current measurement,
+In the correction phase, the predicted state estimate is updated using the latest measurement,
 \begin{equation}
 K_k = P_{k|k-1} C^\top \left( C P_{k|k-1} C^\top + R_{\mathrm{KF}} \right)^{-1},
 \end{equation}
@@ -366,10 +367,9 @@ K_k = P_{k|k-1} C^\top \left( C P_{k|k-1} C^\top + R_{\mathrm{KF}} \right)^{-1},
 \begin{equation}
 P_{k|k} = (I - K_k C) P_{k|k-1},
 \end{equation}
-where $P_{k|k}$ is the updated estimation error covariance matrix, $R_{\mathrm{KF}}$ denotes the measurement noise covariance matrix of the Kalman filter, $K_k$ is the Kalman gain, and $I \in \mathbb{R}^{n \times n}$ is the identity matrix.
+where $P_{k|k}$ is the updated estimation error covariance matrix, $R_{\mathrm{KF}}$ is the measurement noise covariance matrix of the KF, $K_k$ is the Kalman gain, and $I \in \mathbb{R}^{n \times n}$ is the identity matrix.
 
-
-In this work, the Kalman filter is used to estimate the system state required by the MPC controller. For the Koopman-based MPC implementation, the KF operates in the lifted state space and estimates the Koopman state vector for prediction and control. Conversely, in the linear-based MPC, the KF estimates the internal state of the first-order linear model that represents the primary thermal dynamics of the system. By employing the same estimation structure in both approaches, a consistent framework for comparison is maintained.
+In our work, the Kalman filter provides the state estimates needed by the MPC controller. For the Koopman-based MPC, the KF runs in the lifted state space to estimate the Koopman state vector used for prediction and control. In contrast, for the linear MPC, the KF estimates the internal state of the first-order linear model that describes the main thermal dynamics. Using the same estimation structure for both methods ensures a fair and consistent basis for comparison.
 
 
 \section{Model Predictive Control}
@@ -377,7 +377,7 @@ In this work, the Kalman filter is used to estimate the system state required by
 
 Model Predictive Control (MPC) is an advanced control strategy based on repeatedly solving a constrained finite-horizon optimization problem \cite{rawlings_mpc,martin2019mpc}. At each sampling instant, a prediction model is used to predict future system behavior over a predefined prediction horizon, and an optimal sequence of control inputs is computed.
 
-MPC operates according to the receding horizon principle. Although an optimal input sequence is computed over the prediction horizon, only the first control input is applied to the system \cite{martin2019mpc}. At the next sampling instant, the optimization problem is solved again using updated state estimates.
+MPC follows the receding horizon principle, where an optimal sequence of control inputs is calculated for the prediction horizon, but only the first input is actually implemented on the system \cite{martin2019mpc}. At each sampling step, the optimization problem is resolved with the latest state estimates.
 
 In this work, MPC is formulated for discrete-time linear systems described by the state-space model
 \begin{equation}
@@ -388,7 +388,7 @@ y_k = C x_k + D u_k,
 \end{equation}
 where $x_k \in \mathbb{R}^n$ denotes the system state vector, $u_k \in \mathbb{R}^m$ is the control input, and $y_k \in \mathbb{R}^p$ is the system output. The matrices $A$, $B$, $C$, and $D$ describe the discrete-time prediction model. In many thermal systems, including the system considered in this work, the direct feedthrough term $D$ is zero or negligible.
 
-For the linear-model-based MPC, the prediction model was obtained from a first-order step-response model. The continuous-time transfer function can be written as
+The simple linear MPC was obtained from a first-order step-response model. The continuous-time transfer function can be written as
 \begin{equation}
 G(s) = \frac{K}{\tau s + 1},
 \label{eq:first_order_transfer}
@@ -403,7 +403,7 @@ D = 0.
 \end{equation}
 These matrices define the prediction model used by the MPC controller based on the linear step-response approximation.
 
-The control objective is to regulate to a steady-state operating point. This objective is expressed through a quadratic cost function that penalizes deviations of the predicted output from zero and excessive control effort. The MPC optimization problem solved at each sampling instant is given by
+The control objective is to drive the system to a desired steady-state operating point. This is formulated using a quadratic cost function that penalizes both deviations of the predicted output from zero and excessive control input. At each sampling instant, MPC solves the following optimization problem:
 
 
     
@@ -426,13 +426,14 @@ The control objective is to regulate to a steady-state operating point. This obj
     \end{equation}
     
 
-    where $N$ denotes the prediction horizon, and $\hat{x}_{t}$ is the estimated system state at the current sampling instant $t$. The index $k = 0,\ldots,N-1$ denotes the prediction step within the horizon. The matrices $Q \succeq 0$ and $R \succ 0$ are weighting matrices. The matrix $Q$ determines the importance of output regulation, while $R$ penalizes aggressive control actions.
+    where $N$ denotes the prediction horizon, and $\hat{x}_{t}$ is the estimated system state at the current sampling instant $t$. The index $k = 0,\ldots,N-1$ denotes the prediction step within the horizon. The weighting matrices $Q \succeq 0$ and $R \succ 0$ determine the relative importance of output regulation and control effort, respectively. $Q$ increases the penalty on output deviations, while $R$ penalizes large or aggressive control moves.
 
 
-Input and output constraints reflect physical and operational limitations of the controlled system. In thermal processes, input constraints typically represent actuator saturation, while output constraints are used to keep temperatures within safe operating limits \cite{rawlings_mpc, martin2019mpc}.
-
-The prediction horizon $N$ affects both control performance and computational complexity. In practical implementations, its value is chosen to balance prediction accuracy with real-time computational demands \cite{rawlings_mpc}. 
+ 
 % In this thesis, $N = 20$ was selected based on empirical results.
+
+Input and output constraints capture the physical and operational boundaries of the system. For thermal processes, input constraints usually correspond to actuator saturation, while output constraints ensure that temperatures remain within safe operating ranges \cite{rawlings_mpc, martin2019mpc}.
+The choice of prediction horizon $N$ influences both the control performance and the computational load. In practice, $N$ is selected to achieve a compromise between prediction accuracy and the real-time requirements of the application \cite{rawlings_mpc}.
 
 This MPC formulation is used consistently for both the linear-based and Koopman-based prediction models. The difference between the two control approaches lies solely in the prediction model matrices used in the optimization problem, enabling a direct and fair comparison.
 
@@ -442,13 +443,9 @@ This MPC formulation is used consistently for both the linear-based and Koopman-
 
 \section{Koopman-Based Model Predictive Control}
 
-Koopman-based Model Predictive Control (Koopman MPC) combines the standard first-order MPC framework with a data-driven Koopman model and a Kalman filter for state estimation. 
-In contrast to the linear MPC based on a first-order model, the prediction model in Koopman MPC is formulated in the lifted state space introduced in Section~\ref{sec:deep_koopman}. 
-The lifted-state dynamics and output mapping given by equations~\eqref{eq:koopman_state} and~\eqref{eq:koopman_output} are directly used within the MPC prediction scheme \cite{korda2018,koopman_mpc_review}.
+Koopman-based Model Predictive Control (Koopman MPC) integrates the conventional first-order MPC approach with a data-driven Koopman model and uses a Kalman filter for state estimation. Unlike linear MPC, which relies on a first-order model, Koopman MPC formulates its prediction model in the lifted state space described in Section~\ref{sec:deep_koopman}. The lifted-state dynamics and output mapping from equations~\eqref{eq:koopman_state} and~\eqref{eq:koopman_output} are incorporated directly into the MPC prediction process \cite{korda2018,koopman_mpc_review}.
 
-From the MPC perspective, the Koopman-based prediction model is treated as a standard linear state-space model.
-The same quadratic cost function and input and output constraints as in first-order MPC are employed.
-The main difference lies in the prediction model, which operates on the lifted state vector $z_k$, and in the use of a state estimator to initialize the prediction.
+From the MPC perspective, the Koopman-based prediction model is treated as a standard linear state-space system. The same quadratic cost function and input/output constraints used in first-order MPC are applied. The key distinction is that the prediction model operates on the lifted state vector $z_k$, and a state estimator is used to provide the initial state for prediction.
 
 At each sampling instant $t$, the Koopman MPC controller solves the following finite-horizon optimization problem
 \begin{equation}
@@ -469,15 +466,14 @@ At each sampling instant $t$, the Koopman MPC controller solves the following fi
 \label{eq:koopman_mpc_optimization}
 \end{equation}
 
-where $\hat{z}_t \in \mathbb{R}^{n_z}$ denotes the estimated lifted state vector at the current sampling instant $t$, obtained from the Kalman filter and used as the initial condition for the MPC prediction. The index $k = 0,\ldots,N-1$ denotes the prediction step within the horizon. The output constraints are enforced on the predicted physical output obtained from the lifted state through the output mapping in Equation~\eqref{eq:koopman_output}.
+where $\hat{z}_t \in \mathbb{R}^{n_z}$ denotes the estimated lifted state vector at the current sampling instant $t$, obtained from the Kalman filter and used as the initial condition for the MPC prediction. The index $k = 0,\ldots,N-1$ denotes the prediction step within the horizon. The output constraints are applied to the predicted physical output, which is computed from the lifted state using the output mapping described in Equation~\eqref{eq:koopman_output}.
 
 In closed-loop operation, the Koopman MPC controller proceeds as follows.
 At each sampling instant, the heat exchanger outlet temperature is measured and scaled.
-This measurement, together with the previously applied control input, is used by the Kalman filter described in Section~\ref{sec:KF} to estimate the lifted state vector $\hat{z}_k$.
+This measurement, along with the most recent control input, is used by the Kalman filter described in Section~\ref{sec:KF} to estimate the lifted state vector $\hat{z}_k$.
 The estimated state $\hat{z}_k$ is then used as the initial condition of the MPC prediction model.
 
-The optimization problem is solved over the finite horizon, but only the first control input is applied to the plant.
-At the next sampling instant, the procedure is repeated using updated measurements and state estimates.
+The optimization problem is solved over the finite prediction horizon, but only the first control input from the computed sequence is implemented on the system. At each sampling instant, this process is repeated with the latest measurements and updated state estimates.
 
 
 \begin{figure}[htbp]
