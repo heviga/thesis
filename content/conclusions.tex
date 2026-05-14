@@ -430,7 +430,7 @@ The objective function value is lower for first-order MPC, indicating smoother c
 The differences can be related to the behavior of the real system.
 The heat exchanger exhibits nonlinearities and disturbances that neither model fully captures.
 The Koopman MPC tends to respond more strongly when the temperature is below the expected value, leading to larger initial control actions and occasional overshoot.
-The first-order MPC behaves more conservatively, leading to slightly lower RMSE but slower input adjustment.
+The first-order MPC is more cautious, so while the RMSE is a bit lower, the inputs take longer to adjust.
 
 Overall, both controllers provide consistent and stable regulation of the system.
 The main differences are visible in the transient phase, particularly in the aggressiveness of the control input and the speed of convergence.
