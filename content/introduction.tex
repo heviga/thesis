@@ -10,7 +10,7 @@ This framework enables systematic control design for both Single-Input Single-Ou
 
 
 MPC has been applied to heat exchanger control in both industrial and pilot-scale settings. 
-Reported applications include outlet temperature regulation under constrained conditions, where MPC outperformed PID control by reducing temperature variance by 20--40\%, while maintaining stable operation near input and output limits \cite{mpc_heat_exchanger}. These outcomes have motivated further research into improved modeling techniques for MPC, including data-driven approaches that better capture nonlinear system dynamics.
+Reported applications include outlet temperature regulation under constrained conditions, where MPC outperformed PID control by reducing temperature variance by 20--40\%, while maintaining stable operation near input and output limits \cite{mpc_heat_exchanger}. These outcomes have motivated further research into improved modeling techniques for MPC, including data-driven approaches that better capture nonlinear system dynamics \cite{grune2016nonlinear}.
 
 
 Classical linear models remain widely used in industrial applications due
@@ -46,7 +46,7 @@ $g(\cdot)$, which maps the original system states or measurements into a higher-
 Various strategies for constructing the lifting function $g(\cdot)$ have been proposed in the literature. Early data-driven approaches utilized predefined dictionaries of basis functions, such as polynomials, radial basis functions, or Fourier modes. Extended Dynamic Mode Decomposition (EDMD) is a well-known example, approximating the Koopman operator using linear regression in a specified function space \cite{williams2015}. The effectiveness of such methds depends on the selected dictionary and can be constrained for complex or high-dimensional systems.
 
 Recent research has increasingly focused on learning the lifting function directly from data. Brunton, Proctor, and Kutz~\cite{brunton2016} demonstrated that sparse data-driven representations can identify system dynamics in the absence of explicit physical models. Building on this foundation, Korda and Mezi\'c~\cite{korda2018} introduced Koopman-based linear predictors for nonlinear systems and established their applicability in optimal control problems.
-Neural-network-based lifting functions have further  advanced this approach by providing flexible representations of nonlinear dynamics while retaining a linear structure suitable for control design \cite{koopman_mpc_review}.
+Neural-network-based lifting functions have further advanced this approach by providing flexible representations of nonlinear dynamics while retaining a linear structure suitable for control design \cite{koopman_mpc_review}.
 
 
 The Koopman framework has also been incorporated into MPC frameworks \cite{korda2018}.
