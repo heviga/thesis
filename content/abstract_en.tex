@@ -4,3 +4,6 @@ System identification was carried out using step changes in the flow-rate of the
 Based on the measured data, a first-order linear model was identified. In addition, a data-driven Koopman model was developed, which allows improved approximation of nonlinear system behavior using linear dynamics in a higher-dimensional space.
 For both models, MPC controllers were designed with a quadratic optimization problem and with constraints on the system input and output. A Kalman filter was included in the control structure to estimate the system states. The models were compared in terms of control accuracy, deviation from the steady state, and control effort. The numerical simulations were performed using a nonlinear mathematical model of the device.
 In the experimental part of the thesis, MPC control was applied to the heat exchanger, where the system was controlled from different initial temperatures to a steady-state. The Koopman-based MPC improves transient response and reduces error in most cases, however, this comes at the cost of more aggressive control actions compared to the first-order MPC.
+
+\vspace{0.5cm}
+\noindent\textbf{Keywords:} plate heat exchanger, Model Predictive Control, Koopman model, system identification

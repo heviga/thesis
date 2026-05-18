@@ -1,7 +1,7 @@
 \chapter{Theoretical Background}
 \label{ch:theory}
 
-This chapter talks about the theoretical foundation for the modeling and control methods employed in this thesis.
+This chapter presents the theoretical foundation for the modeling and control methods employed in this thesis.
 It starts by discussing classical linear modeling, which serves as the baseline description of heat exchanger dynamics.
 Subsequently, the Koopman operator framework is introduced as a data-driven approach for modeling nonlinear system behavior using lifted linear representations.
 
@@ -39,7 +39,7 @@ For a lifting function $g(\cdot)$, it satisfies
 A key characteristic of the Koopman operator is its linearity, despite the nonlinear nature of the underlying system dynamics. This enables the use of the operator's spectral properties to analyze system evolution \cite{mauroy2020koopman}.
 
 
-The Koopman operator was originally proposed by Koopman \cite{koopman1931} and later developed further by Mezi'c \cite{mezic2005}. It is a linear operator that acts in an infinite-dimensional space. Since this is not practical for real applications, we use finite-dimensional approximations built from measured data. These approximations use a limited number of lifted states, chosen through a lifting function $g(\cdot)$ \cite{mauroy2020koopman}.
+The Koopman operator was originally proposed by Koopman \cite{koopman1931} and later developed further by Mezi\'c \cite{mezic2005}. It is a linear operator that acts in an infinite-dimensional space. Since this is not practical for real applications, we use finite-dimensional approximations built from measured data. These approximations use a limited number of lifted states, chosen through a lifting function $g(\cdot)$ \cite{mauroy2020koopman}.
 
 The lifting transformation $g(\cdot)$ maps the original system variables into a higher-dimensional space, such that the lifted state vector satisfies $z_k \in \mathbb{R}^{n_z}$, where typically $n_z \gg n_x$, with $n_x$ denoting the original state dimension.
 As a result, the Koopman system matrices have dimensions
@@ -75,7 +75,7 @@ The structure of the model is encoder–linear dynamics–decoder~\cite{goodfell
 z_k = f_y(y_k),
 \label{eq:koopman_encoder}
 \end{equation}
-where $f_y(\cdot)$ is a trainable nonlinear mapping. The encoder in the constructed model maps the measured output $y_k$ to a lifted state $z_k \in \mathbb{R}^{10}$ using a fully connected neural network with three hidden layers of 60 neurons each.
+where $f_y(\cdot)$ is a trainable nonlinear mapping. The encoder in our constructed model maps the measured output $y_k$ to a lifted state $z_k \in \mathbb{R}^{10}$ using a fully connected neural network with three hidden layers of 60 neurons each.
 
 
 The evolution of the lifted state is described by the finite-dimensional Koopman model as in Equation~\eqref{eq:koopman_state}, where $A_{\mathcal K}$ represents the linear dynamics in the lifted space and $B_{\mathcal K}$ describes the influence of the control input.
@@ -254,7 +254,7 @@ Figures~\ref{fig:encoder_network} and~\ref{fig:decoder_network} show schematic e
 
 \FloatBarrier
 
-All parts of the model, including the encoder, the lifted linear dynamics, and the decoder, are identified simultaneously from measured trajectories. The identification is performed using the Neuromancer framework, which formulates the training as a structured optimization problem and enables gradient-based learning.
+All parts of the model, including the encoder, the lifted linear dynamics, and the decoder, are identified simultaneously from measured trajectories. The identification is performed using the \texttt{Neuromancer} framework~\cite{neuromancer2022}, which formulates the training as a structured optimization problem and enables gradient-based learning.
 
 After training, the learned matrices $A_{\mathcal K}$, $B_{\mathcal K}$, and $C_{\mathcal K}$ define a linear state-space model in the lifted coordinates. This model can then be used directly as the prediction model in MPC.
 
@@ -332,7 +332,7 @@ The resulting Koopman model is then represented as a linear state-space system i
 \section{Kalman Filter}
 \label{sec:KF}
 
-The Kalman filter (KF) is a state-estimation method that uses a mathematical model and noisy measurements to estimate the internal states of dynamic systems. In control applications, it provides reliable state estimates for feedback controllers, particularly when not all system states are directly measurable \cite{kalman1960,morari1999}. In Koopman-based MPC, the lifted states are usually not directly measurable and therefore require an estimate for feedback control~\cite{valabek2026experimental}.
+The Kalman filter (KF) is a state-estimation method that uses a mathematical model and noisy measurements to estimate the internal states of dynamic systems. In control applications, it provides reliable state estimates for feedback controllers, particularly when not all system states are directly measurable \cite{kalman1960,morari1999}, just as in the Koopman-based MPC. They require an estimate for feedback control~\cite{valabek2026experimental}.
 
 Consider a discrete-time linear system with process and measurement noise described by
 \begin{equation}
@@ -346,7 +346,7 @@ y_k = C x_k + v_k,
 where $w_k$ and $v_k$ denote zero-mean Gaussian process and measurement noise, respectively.
 
 
-The KF estimates the system state by minimizing the mean-square error, assuming the presence of Gaussian noise. The algorithm operates in two main phases: prediction and correction. Here, $\hat{x}_{k|k}$ refers to the state estimate at time $k$ based on all measurements up to that point, while $\hat{x}_{k|k-1}$ is the predicted state estimate before the current measurement is taken into account.
+The KF estimates the system state by minimizing the mean-square error, assuming Gaussian noise. The algorithm operates in two main phases: prediction and correction. Here, $\hat{x}_{k|k}$ refers to the state estimate at time $k$ based on all measurements up to that point, while $\hat{x}_{k|k-1}$ is the predicted state estimate before the current measurement is taken into account.
 
 During the prediction phase, the state estimate and its associated covariance are propagated using the system model,
 \begin{equation}
@@ -369,7 +369,9 @@ P_{k|k} = (I - K_k C) P_{k|k-1},
 \end{equation}
 where $P_{k|k}$ is the updated estimation error covariance matrix, $R_{\mathrm{KF}}$ is the measurement noise covariance matrix of the KF, $K_k$ is the Kalman gain, and $I \in \mathbb{R}^{n \times n}$ is the identity matrix.
 
-The state estimations required by the MPC controller in our work are obtained by the Kalman filter. To estimate the Koopman state vector utilized for prediction and control in the Koopman-based MPC, the KF operates in the lifted state space. In contrast, for the linear MPC, the KF estimates the internal state of the first-order linear model that describes the main thermal dynamics. A fair and consistent foundation for comparison is ensured by using the same estimating structure for both approaches.
+The state estimates that MPC controller requires in our work are obtained using the Kalman filter. To estimate the Koopman state vector utilized for prediction and control in the Koopman-based MPC, the KF operates in the lifted state space.
+
+For the MPC derived from the first-order step-response, the KF estimates the internal state that describes the main thermal dynamics. Using the same estimation structure in both approaches provides a consistent basis for comparison.
 
 
 \section{Model Predictive Control}
@@ -388,7 +390,7 @@ y_k = C x_k + D u_k,
 \end{equation}
 where $x_k \in \mathbb{R}^n$ denotes the system state vector, $u_k \in \mathbb{R}^m$ is the control input, and $y_k \in \mathbb{R}^p$ is the system output. The matrices $A$, $B$, $C$, and $D$ describe the discrete-time prediction model. In many thermal systems, including the system considered in this work, the direct feedthrough term $D$ is zero or negligible.
 
-The simple linear MPC was obtained from a first-order step-response model. The continuous-time transfer function can be written as
+For the simple linear MPC, a first-order representation obtained from the step response was used for prediction. The continuous-time transfer function can be written as
 \begin{equation}
 G(s) = \frac{K}{\tau s + 1},
 \label{eq:first_order_transfer}
@@ -443,7 +445,7 @@ This MPC formulation is used consistently for both the linear-based and Koopman-
 
 \section{Koopman-Based Model Predictive Control}
 
-Koopman-based Model Predictive Control (Koopman MPC) integrates the conventional first-order MPC approach with a data-driven Koopman model and uses a Kalman filter for state estimation. Unlike linear MPC, which relies on a first-order model, Koopman MPC formulates its prediction model in the lifted state space described in Section~\ref{sec:deep_koopman}. The lifted-state dynamics and output mapping from equations~\eqref{eq:koopman_state} and~\eqref{eq:koopman_output} are incorporated directly into the MPC prediction process \cite{korda2018,koopman_mpc_review}.
+Koopman-based Model Predictive Control (Koopman MPC) integrates the conventional first-order MPC approach with a data-driven Koopman model and uses a Kalman filter for state estimation. Koopman MPC formulates its prediction model in the lifted state space described in Section~\ref{sec:deep_koopman}. The lifted-state dynamics and output mapping from equations~\eqref{eq:koopman_state} and~\eqref{eq:koopman_output} are incorporated directly into the MPC prediction process \cite{korda2018,koopman_mpc_review}.
 
 From the MPC perspective, the Koopman-based prediction model is treated as a standard linear state-space system. The same quadratic cost function and input/output constraints used in first-order MPC are applied. The key distinction is that the prediction model operates on the lifted state vector $z_k$, and a state estimator is used to provide the initial state for prediction.
 

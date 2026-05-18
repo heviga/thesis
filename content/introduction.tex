@@ -4,7 +4,7 @@
 \label{ch:introduction}
 Heat exchangers are crucial in industrial and energy systems, where precise temperature control is often needed. Controlling them with conventional industrial methods can be challenging due to their complex behavior, operational limitations, and poor response times. As a result, more advanced control strategies are being used.
 
-Model Predictive Control (MPC) is a widely adopted method in process engineering, providing a systematic way to control constrained Single-Input Single-Output (SISO) and Multi-InputMulti-Output (MIMO) systems through finite-horizon optimization that explicitly accounts for system constraints, making it ideal for various industrial applications such as thermal processes \cite{rawlings_mpc}.
+Model Predictive Control (MPC) is a widely adopted method in process engineering, providing a systematic way to control constrained Single-Input Single-Output (SISO) and Multiple-Input Multiple-Output (MIMO) systems through finite-horizon optimization that explicitly accounts for system constraints, making it ideal for various industrial applications such as thermal processes \cite{rawlings_mpc}.
 
 MPC has also been reported in heat-exchanger control applications, where the main goal is usually outlet temperature regulation under input and output constraints. These studies show that predictive control can improve temperature regulation compared with simpler feedback strategies, especially when the operation is close to actuator or safety limits~\cite{mpc_heat_exchanger, grune2016nonlinear}.
 
@@ -38,7 +38,7 @@ In Koopman-based MPC, the learned linear model is employed directly within the M
 This integration enables direct comparison of Koopman-based MPC and classical first-order linear MPC under identical constraints and cost functions. This thesis investigates how Koopman-based modeling influences control performance.
 
 
-Numerous recent studies have shown how Koopman-based MPC may be used in thermal systems. For example, Koopman–Model Predictive Control was implemented in a warm-water supply system, where a data-driven linear Koopman model regulated outlet temperature under variable demand and operating conditions, resulting in improved tracking and constraint handling compared to conventional control approaches \cite{miyashita2022koopman}.
+Other recent studies have shown how Koopman-based MPC may be used in thermal systems. For example, Koopman–Model Predictive Control was implemented in a warm-water supply system, where a data-driven linear Koopman model regulated outlet temperature under variable demand and operating conditions, resulting in improved tracking and constraint handling compared to conventional control approaches \cite{miyashita2022koopman}.
 Other studies have explored vehicle thermal management, utilizing Koopman-based MPC to regulate temperatures in automotive thermal subsystems with nonlinear heat transfer characteristics, all while ensuring actuator and safety constraints are satisfied \cite{chen2025koopman_tms}.
 
 
